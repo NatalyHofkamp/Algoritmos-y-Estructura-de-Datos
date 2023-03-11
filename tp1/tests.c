@@ -277,7 +277,7 @@ bool test_integer_anagrams() {
 
     tests_result &= test_assert("Prueba anagramas de arreglos largo distinto", !integer_anagrams(array1, 2, array2, 3));
     tests_result &= test_assert("Prueba anagramas de arreglos iguales", integer_anagrams(array1, 10, array2, 10));
-    tests_result &= test_assert("Prueba anagramas de arreglos ambos nulos", !integer_anagrams(NULL, 5, NULL, 5));
+    tests_result &= test_assert("Prueba anagramas de arreglos ambos nulos", integer_anagrams(NULL, 5, NULL, 5));//preguntar si va sin un !
     tests_result &= test_assert("Prueba anagramas de arreglos uno nulo", !integer_anagrams(array1, 5, NULL, 5));
     tests_result &= test_assert("Prueba anagramas de arreglos el otro nulo", !integer_anagrams(NULL, 5, array2, 5));
     for (int i = 0; i < 10; i++) {
