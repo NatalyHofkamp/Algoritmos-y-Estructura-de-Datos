@@ -63,6 +63,9 @@ void array_map(int *array, int length, int f(int)){
 int *copy_array(const int *array, int length){
     if(array!=NULL){
         int* aux =(int*) malloc(length*sizeof(int));
+        if (NULL==aux){
+            return NULL;
+        }
         for(size_t i=0;i<length;i++){
                 aux[i]=array[i];    
         }
@@ -137,21 +140,26 @@ bool integer_anagrams(const int *array1, int length1,
  * array_amount: la cantidad de arreglos
  */
 int **copy_array_of_arrays(const int **array_of_arrays, const int *array_lenghts, int array_amount){
-    if(array_of_arrays!=NULL){
-        int **aux= malloc(sizeof(int *) * array_amount);//validar los  malloc?
+    if((array_of_arrays!=NULL) && (array_amount>0)){
+        int **aux= malloc(sizeof(int *) * array_amount);
+        if (NULL==aux){
+            return NULL;
+        }
         for(size_t x=0;x<array_amount;x++){
             if(array_of_arrays[x]==NULL){
                 aux[x]=NULL;
             }
             else{
                 aux[x]= malloc(sizeof(int)*array_lenghts[x]);
+                if (NULL==aux[x]){
+                    return NULL;
+                }
                 for(size_t y=0; y<array_lenghts[x];y++){
                      aux[x][y]=array_of_arrays[x][y];
                 }
             }
         }
         return aux;
-       // free_array_of_arrays(aux,array_lenghts,array_amount);
     }
     return NULL;
 }
