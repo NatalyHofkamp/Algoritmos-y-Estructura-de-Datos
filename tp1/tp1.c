@@ -67,11 +67,11 @@ int *copy_array(const int *array, int length){
             return NULL;
         }
         for(size_t i=0;i<length;i++){
-                aux[i]=array[i];    
+                aux[i]=array[i];
         }
         return aux;
     }
-    
+
     return NULL;
 }
 /*
@@ -118,6 +118,9 @@ bool array_equal(const int *array1, int length1,
  */
 bool integer_anagrams(const int *array1, int length1,
                       const int *array2, int length2){
+    if(NULL==array1 && NULL==array2){
+        return false;
+    }
     int* aux1= copy_array(array1,length1);
     int* aux2= copy_array(array2,length2);
     bubble_sort(aux1,length1);
@@ -127,7 +130,7 @@ bool integer_anagrams(const int *array1, int length1,
     free(aux2);
     return result;
 
-    
+
 }
 
 /*
@@ -146,18 +149,7 @@ int **copy_array_of_arrays(const int **array_of_arrays, const int *array_lenghts
             return NULL;
         }
         for(size_t x=0;x<array_amount;x++){
-            if(array_of_arrays[x]==NULL){
-                aux[x]=NULL;
-            }
-            else{
-                aux[x]= malloc(sizeof(int)*array_lenghts[x]);
-                if (NULL==aux[x]){
-                    return NULL;
-                }
-                for(size_t y=0; y<array_lenghts[x];y++){
-                     aux[x][y]=array_of_arrays[x][y];
-                }
-            }
+            aux[x]=copy_array(array_of_arrays[x],array_lenghts[x]);
         }
         return aux;
     }
