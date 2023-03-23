@@ -48,7 +48,7 @@ int array_max(const int *array, int length){
  * Aplica la función a cada elemento de un arreglo de enteros.
  */
 void array_map(int *array, int length, int f(int)){
-    if (f!=NULL){
+    if (f){
         for(size_t x=0;x<length;x++){
             array[x]=f(array[x]);
         }
@@ -61,9 +61,9 @@ void array_map(int *array, int length, int f(int)){
  */
 
 int *copy_array(const int *array, int length){
-    if(array!=NULL){
+    if(array){
         int* aux =(int*) malloc(length*sizeof(int));
-        if (NULL==aux){
+        if (!aux){
             return NULL;
         }
         for(size_t i=0;i<length;i++){
@@ -79,7 +79,7 @@ int *copy_array(const int *array, int length){
  * Si el arreglo es NULL, no hace nada.
  */
 void bubble_sort(int *array, int length){
-    if(array!=NULL){
+    if(array){
         for (size_t x=0; x<length-1;x++){
             for(size_t y=0;y<length-x-1;y++){
                 int aux = array[y];
@@ -98,7 +98,7 @@ void bubble_sort(int *array, int length){
  */
 bool array_equal(const int *array1, int length1,
                  const int *array2, int length2){
-    if((length1 ==length2)&&(array1!=NULL && array2!=NULL)){
+    if((length1 ==length2)&&(array1 && array2)){
         for(size_t i=0;i<length1;i++){
             if(array1[i]!=array2[i]){
                 return false;
@@ -106,11 +106,10 @@ bool array_equal(const int *array1, int length1,
         }
         return true;
     }
-    if (array1==NULL && array2==NULL){
+    if (!array1 && !array2){
         return true;
     }
     return false;
-
 }
 /*
  * Determina si dos arrays de enteros son análogos a un anagrama para textos (en algun orden particular, son el mismo arreglo).
@@ -118,7 +117,7 @@ bool array_equal(const int *array1, int length1,
  */
 bool integer_anagrams(const int *array1, int length1,
                       const int *array2, int length2){
-    if(NULL==array1 && NULL==array2){
+    if(!array1 && !array2){
         return false;
     }
     int* aux1= copy_array(array1,length1);
@@ -129,8 +128,6 @@ bool integer_anagrams(const int *array1, int length1,
     free(aux1);
     free(aux2);
     return result;
-
-
 }
 
 /*
@@ -143,9 +140,9 @@ bool integer_anagrams(const int *array1, int length1,
  * array_amount: la cantidad de arreglos
  */
 int **copy_array_of_arrays(const int **array_of_arrays, const int *array_lenghts, int array_amount){
-    if((array_of_arrays!=NULL) && (array_amount>0)){
+    if((array_of_arrays) && (array_amount>0)){
         int **aux= malloc(sizeof(int *) * array_amount);
-        if (NULL==aux){
+        if (!aux){
             return NULL;
         }
         for(size_t x=0;x<array_amount;x++){
