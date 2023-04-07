@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "tp2.h": "c",
+        "stdbool.h": "c"
+    }
+}
