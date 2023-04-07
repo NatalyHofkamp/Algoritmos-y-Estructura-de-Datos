@@ -617,7 +617,6 @@ bool test_iter_insert_after_at_start() {
     tests_result &= test_assert("Se inserto un elemento delante de head", list_iter_insert_after(iter, aux));
     tests_result &= test_assert("El iterador sigue en el primero", list_iter_at_first(iter));
     list_iter_destroy(iter);
-
     iter = list_iter_create_head(list);
     tests_result &= test_assert("Se creo un nuevo iterador al principio", iter != NULL);
     tests_result &= test_assert("El elemento actual es 1",
@@ -1265,13 +1264,13 @@ int main(void) {
     return_code += !test_iter_simple_move();
     return_code += !test_iter_peek_empty_list();
     return_code += !test_iter_move_and_peek();
-    // return_code += !test_iter_move_at_start_and_end();
-    // return_code += !test_iter_full_list_read_only();
-    // return_code += !test_iter_move_on_random_list();
-    // return_code += !test_iter_insert_after_at_start();
-    // return_code += !test_iter_insert_after_at_start_fails();
-    // return_code += !test_iter_insert_after_at_middle();
-    // return_code += !test_iter_insert_after_at_tail();
+    return_code += !test_iter_move_at_start_and_end();
+    return_code += !test_iter_full_list_read_only();
+    return_code += !test_iter_move_on_random_list();
+    return_code += !test_iter_insert_after_at_start();
+    return_code += !test_iter_insert_after_at_start_fails();
+    return_code += !test_iter_insert_after_at_middle();
+    return_code += !test_iter_insert_after_at_tail();
     // return_code += !test_iter_insert_before_at_end();
     // return_code += !test_iter_insert_before_at_end_fails();
     // return_code += !test_iter_insert_before_at_middle();

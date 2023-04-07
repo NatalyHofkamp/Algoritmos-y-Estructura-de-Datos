@@ -62,7 +62,7 @@ bool list_insert_head(list_t *list, void *value){
         node->next= NULL;
         list->head=node;
         list->tail=node;
-        list->size++;
+        list->size=1;
         return true;
     }
     else{
@@ -90,12 +90,12 @@ bool list_insert_tail(list_t *list, void *value){
         node->prev=NULL;
         list->tail=node;
         list->head=node;
-        list->size++;
+        list->size=1;
         return true;
     }
     else{
-        node->prev=aux;
         aux->next=node;
+        node->prev=aux;
         list->tail=node;
         list->size++;
         return true;
@@ -125,43 +125,39 @@ void *list_peek_tail(const list_t *list){
  */
 void *list_pop_head(list_t *list){
     if(list_is_empty(list))return NULL;
-    if(list->size>1){
-        void* value=list->head->value;
-        list->head=list->head->next;
-        free(list->head->prev);
+    void* value=list->head->value;
+    if(list->head->next){
+        node_t* next=list->head->next;
+        free(list->head);
+        list->head=next;
         list->head->prev=NULL;
         list->size--;
-        return value;
     }
     else{
-        void* value=list->head->value;
         free(list->head);
-        list->size--;
-        return value;
+        list->tail=NULL;
+        list->head=NULL;
+        list->size=0;
     }
+    return value;
 }
-/*
- * Elimina un elemento del final de la lista y devuelve el puntero al dato que almacenaba.
- * Pre-condiciones: La lista existe.
- * Post-condiciones: Devuelve el dato y saca un nodo del final de la lista
- * si la lista no está vacia. Devuelve NULL si está vacia.
- */
 void *list_pop_tail(list_t *list){
     if(list_is_empty(list)) return NULL;
-    if(list->size>1){
-        void* value=list->tail->value;
-        list->tail=list->tail->prev;
-        free(list->tail->next);
+    void* value=list->tail->value;
+    if(list->tail->prev){
+        node_t* previous=list->tail->prev;
+        free(list->tail);
+        list->tail=previous;
         list->size--;
         list->tail->next=NULL;
-        return value;
     }
     else{
-        void* value=list->tail->value;
         free(list->tail);
-        list->size--;
-        return value;
+        list->tail=NULL;
+        list->head=NULL;
+        list->size=0;
     }
+    return value;
 }
 /*
  * Destruye una lista liberando toda su memoria. Recibe por parametro una función para liberar a sus miembros.
@@ -189,7 +185,7 @@ void list_destroy(list_t *list, void destroy_value(void *)){
             list->size--;
         }
     }
-    return free(list);
+    free(list);
 }
 
 /*
@@ -226,7 +222,7 @@ list_iter_t *list_iter_create_tail(list_t *list){
  */
 
 bool list_iter_forward(list_iter_t *iter){
-    if((iter->curr==NULL) || !(iter->curr->next)) return false;
+    if(!(iter->curr) || !(iter->curr->next)) return false;
     iter->curr=iter->curr->next;
     return true;
 }
@@ -236,7 +232,7 @@ bool list_iter_forward(list_iter_t *iter){
  * Post: El iterador va una posición hacia atras. Si no puede devuelve false, sino true.
  */
 bool list_iter_backward(list_iter_t *iter){
-    if((iter->curr==NULL) || !(iter->curr->prev)) return false;
+    if(!(iter->curr) || !(iter->curr->prev)) return false;
     iter->curr=iter->curr->prev;
     return true;
 }
@@ -256,10 +252,12 @@ void *list_iter_peek_current(const list_iter_t *iter){
  * Si la lista está vacia es true.
  */
 bool list_iter_at_last(const list_iter_t *iter){
+    if(list_is_empty(iter->list)||!(iter->curr->next)) return true;
     return false;
 }
 
 bool list_iter_at_first(const list_iter_t *iter){
+    if(list_is_empty(iter->list)||!(iter->curr->prev)) return true;
     return false;
 }
 /*
@@ -270,13 +268,37 @@ bool list_iter_at_first(const list_iter_t *iter){
 void list_iter_destroy(list_iter_t *iter){
     free(iter);
 }
-
+/*
+ * Agrega un elemento despues del elemento actual del iterador.
+ * Pre: El iterador fue creado
+ * Post: Agrega un nuevo elemento despues del actual en la lista. Devuelve true si tuvo éxito.
+ * No altera la posición del iterador. Devuelve false si falla.
+ */
 bool list_iter_insert_after(list_iter_t *iter, void *value){
-    return false;
+    if(list_is_empty(iter->list)) return list_insert_head(iter->list,value);
+    if(!iter->curr->next) return list_insert_tail(iter->list,value);
+    node_t* new_node= (node_t*)malloc(sizeof(node_t));
+    if (!new_node)return false;
+    new_node->value=value;
+    new_node->prev=iter->curr;
+    new_node->next=iter->curr->next;
+    iter->curr->next=new_node;
+    iter->list->size++;
+    return true;
+
 }
 
 bool list_iter_insert_before(list_iter_t *iter, void *value){
-    return false;
+    if(list_is_empty(iter->list))return list_insert_head(iter->list,value);
+    if(!iter->curr->prev)return list_insert_head(iter->list,value);
+    node_t* new_node= (node_t*)malloc(sizeof(node_t));
+    if (!new_node)return false;
+    new_node->value=value;
+    new_node->next=iter->curr;
+    new_node->prev=iter->curr->prev;
+    iter->curr->prev=new_node;
+    iter->list->size++;
+    return true;
 }
 
 void *list_iter_delete(list_iter_t *iter){
