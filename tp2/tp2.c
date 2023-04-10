@@ -144,12 +144,12 @@ list_iter_t *list_iter_create_tail(list_t *list){
     return new_iter;
 }
 bool list_iter_forward(list_iter_t *iter){
-    if(!(iter->curr) || list_iter_at_last(iter)) return false;
+    if(list_is_empty(iter->list) || list_iter_at_last(iter)) return false;
     iter->curr = iter->curr->next;
     return true;
 }
 bool list_iter_backward(list_iter_t *iter){
-    if(!(iter->curr) || list_iter_at_first(iter)) return false;
+    if(list_is_empty(iter->list) || list_iter_at_first(iter)) return false;
     iter->curr = iter->curr->prev;
     return true;
 }
