@@ -47,9 +47,8 @@ bool list_insert_head(list_t *list, void *value) {
         list->tail = node;
         list->size = 1;
     } else {
-        node_t* aux=list->head;
-        aux->prev  = node;
-        node->next = aux;
+        list->head->prev  = node;
+        node->next = list->head;
         list->head = node;
         list->size++;
     }
@@ -61,9 +60,8 @@ bool list_insert_tail(list_t *list, void *value) {
     if (!node) return false;
     node->value = value;
     node->next = NULL;
-    node_t* aux = list->tail;
-    aux->next  = node;
-    node->prev = aux;
+    list->tail->next  = node;
+    node->prev = list->tail;
     list->tail = node;
     list->size++;
     return true;
@@ -104,15 +102,10 @@ void *list_pop_tail(list_t *list){
     list->size--;
     return value;
 }
-void list_destroy(list_t *list, void destroy_value(void *)){ //preguntar-> tengo que hacer el free al final? caso lista vacía
-    if (destroy_value ){
-        while(list->tail){
-            destroy_value(list_pop_tail(list));
-        }
-    } else{
-        while(list->tail){
-            list_pop_tail(list);
-        }
+void list_destroy(list_t *list, void destroy_value(void *)){ 
+    while(!list_is_empty(list)){
+        if (destroy_value ) destroy_value(list_pop_tail(list));
+        else list_pop_tail(list);
     }
     free(list);
 }
