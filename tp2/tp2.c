@@ -58,7 +58,7 @@ bool list_insert_head(list_t *list, void *value) {
 bool list_insert_tail(list_t *list, void *value) {
     if(list_is_empty(list)) return list_insert_head(list,value);
     node_t* node = (node_t*)malloc(sizeof(node_t));
-    if (!node)return false;
+    if (!node) return false;
     node->value = value;
     node->next = NULL;
     node_t* aux = list->tail;
