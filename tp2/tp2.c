@@ -166,7 +166,7 @@ bool list_iter_insert_after(list_iter_t *iter, void *value){
 }
 bool list_iter_insert_before(list_iter_t *iter, void *value){
     bool result;
-    if(list_is_empty(iter->list) || list_iter_at_first(iter) ){
+    if(list_iter_at_first(iter) ){
         result=list_insert_head(iter->list,value);
         iter->curr = iter->list->head;
     }else{
@@ -185,12 +185,12 @@ void *list_iter_delete(list_iter_t *iter){
         return list_pop_tail(iter->list);
      }
      else if(list_iter_at_first(iter)){
-        list_iter_forward(iter);
+        list_iter_forward(iter); 
         return list_pop_head(iter->list);
      }
      node_t* next = iter->curr->next;
      next->prev = iter->curr->prev;
-     iter->curr->prev->next=next;
+     iter->curr->prev->next = next;
      void* value = list_iter_peek_current(iter);
      free(iter->curr);
      iter->curr = next;
