@@ -1,6 +1,9 @@
 {
     "files.associations": {
         "tp2.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "test_malloc.h": "c",
+        "testing.h": "c",
+        "tp3.h": "c"
     }
 }

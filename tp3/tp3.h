@@ -1,12 +1,11 @@
 #include <stdbool.h>
 #include <stddef.h>
-
+#include <stdint.h>
 #ifndef TP3_H
 #define TP3_H
 
-struct dictionary;
-
 typedef struct dictionary dictionary_t;
+typedef struct bucket bucket_t;
 typedef void (*destroy_f)(void *);
 
 /* Crea un nuevo diccionario */
