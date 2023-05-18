@@ -1,185 +1,200 @@
 #include "tp3.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
-typedef struct bucket bucket_t;
-
-struct bucket {
-    const void *key;
-    void *value;
-    unsigned long long int bitmap;
-} __attribute__ ((aligned (8)));
-
+typedef struct bucket{
+    void* key;
+    void* value;
+    bool is_deleted;
+}bucket_t;
 
 struct dictionary {
-    size_t exponent;
-    size_t bitmap_len;
-    bucket_t*buckets;
+    bucket_t* buckets;
+    size_t size;
     destroy_f destroy;
-    size_t full_buckets;
-    
+    size_t used_buckets;
+    uint32_t seed;
+};
+size_t murmurhash(const char *key, size_t len, uint32_t seed) {
+  uint32_t c1 = 0xcc9e2d51;
+  uint32_t c2 = 0x1b873593;
+  uint32_t r1 = 15;
+  uint32_t r2 = 13;
+  uint32_t m = 5;
+  uint32_t n = 0xe6546b64;
+  uint32_t h = 0;
+  uint32_t k = 0;
+  uint8_t *d = (uint8_t *)key; // 32 bit extract from `key'
+  const uint32_t *chunks = NULL;
+  const uint8_t *tail = NULL; // tail - last 8 bytes
+  size_t i = 0;
+  size_t l = len / 4; // chunk length
+
+  h = seed;
+
+  chunks = (const uint32_t *)(d + l * 4); // body
+  tail = (const uint8_t *)(d + l * 4);    // last 8 byte chunk of `key'
+
+  // for each 4 byte chunk of `key'
+  for (i = -l; i != 0; ++i) {
+    // next 4 byte chunk of `key'
+    k = chunks[i];
+
+    // encode next 4 byte chunk of `key'
+    k *= c1;
+    k = (k << r1) | (k >> (32 - r1));
+    k *= c2;
+
+    // append to hash
+    h ^= k;
+    h = (h << r2) | (h >> (32 - r2));
+    h = h * m + n;
+  }
+
+  k = 0;
+
+  // remainder
+  switch (len & 3) { // `len % 4'
+    case 3:
+      k ^= (tail[2] << 16);
+    case 2:
+      k ^= (tail[1] << 8);
+
+    case 1:
+      k ^= tail[0];
+      k *= c1;
+      k = (k << r1) | (k >> (32 - r1));
+      k *= c2;
+      h ^= k;
+  }
+
+  h ^= (uint32_t)len;
+
+  h ^= (h >> 16);
+  h *= 0x85ebca6b;
+  h ^= (h >> 13);
+  h *= 0xc2b2ae35;
+  h ^= (h >> 16);
+
+  return (size_t)h;
+}
+dictionary_t *dictionary_create(destroy_f destroy) { 
+    dictionary_t* new_dict = malloc(sizeof(dictionary_t));
+    if(!new_dict) return NULL;
+    new_dict->size = 1024;
+    new_dict->buckets = calloc(sizeof(bucket_t),new_dict->size);
+    if (!new_dict->buckets) return NULL;
+    new_dict->used_buckets = 0;
+    new_dict->destroy = destroy;
+    new_dict->seed = 0xbc9f1d34;
+    return new_dict;
 };
 
-static __inline__ uint32_t _jenkins_hash(const char *key, size_t len){
-    uint32_t hash;
-    size_t i;
-    hash = 0;
-    for ( i = 0; i < len; i++ ) {
-        hash += key[i];
-        hash += (hash << 10);
-        hash ^= (hash >> 6);
-    }
-    hash += (hash << 3);
-    hash ^= (hash >> 11);
-    hash += (hash << 15);
+size_t get_index(dictionary_t* dictionary,const char *key, size_t len, uint32_t seed){
+        size_t hash_key = murmurhash(key,strlen(key),dictionary->seed);
+        return hash_key % dictionary->size;
 
-    return hash;
 }
 
-dictionary_t *dictionary_create(destroy_f destroy) { 
-    dictionary_t* new_dict = (dictionary_t*) malloc (sizeof(dictionary_t));
-    if(!new_dict) return NULL;
 
-    new_dict->exponent = 10;
-    new_dict->bitmap_len = 32; 
-    new_dict->full_buckets = 0;
-    if(destroy) new_dict->destroy = destroy;
-    else new_dict->destroy = free;
-
-    new_dict->buckets = (bucket_t*) malloc (sizeof(bucket_t)*(1<<new_dict->exponent));
-    if(!new_dict->buckets) return NULL;
-
-    memset(new_dict->buckets,0,sizeof(bucket_t)*(1<<new_dict->exponent));
-    return new_dict;
- };
-
-dictionary_t* rehash(dictionary_t* dictionary) {
-  dictionary_t* new_dict = dictionary_create(dictionary->destroy);
-  new_dict->exponent = dictionary->exponent + 2;
-  new_dict->full_buckets = dictionary->full_buckets;
-  size_t size = 1ULL << new_dict->exponent;
-  memset(new_dict->buckets, 0, sizeof(bucket_t) * size);
-  size_t i = 0;
-  while (i < size) {
-    if (dictionary->buckets[i].key) {
-      dictionary_put(new_dict, dictionary->buckets[i].key, dictionary->buckets[i].value);
-    }
-    ++i;
+bool rehash_table(dictionary_t* old_dict) {
+  printf("\n----------REHASH-----------------\n");
+  dictionary_t* new_dict = dictionary_create(old_dict->destroy);
+  if (!new_dict) return false;
+  new_dict->size = old_dict->size*2;
+  free(new_dict->buckets);
+  new_dict->buckets = calloc(sizeof(bucket_t), new_dict->size);
+  if (!new_dict->buckets) {
+    dictionary_destroy(new_dict);
+    return false;
   }
-  return new_dict;
-}
 
-size_t index_search (dictionary_t* dictionary, const char* key){
-  size_t size = 1ULL << dictionary->exponent;
-  uint32_t hs = _jenkins_hash(key, strlen(key));
-  size_t index = hs & (size - 1); //mete el hash dentro del rango del tamaño de la tabla
-  for (size_t i = index; i < (1ULL << dictionary->exponent); i++) {
-    if (dictionary->buckets[i].key == key) {
-      return index; // Se encontró el elemento en el bucket actual
-    }
-    size_t j = 1;
-    while (j < dictionary->bitmap_len) {
-      size_t neighbor_index = (i + j) % size; // Índice del vecino considerando el tamaño de la tabla
-      if (dictionary->buckets[neighbor_index].key== key) {
-        return neighbor_index; // Se encontró el elemento en un vecino
-      }
-      j++;
+  for (size_t i = 0; i < old_dict->size; i++) {
+    if (old_dict->buckets[i].key) {
+       if (!dictionary_put(new_dict, old_dict->buckets[i].key, old_dict->buckets[i].value)) {
+          dictionary_destroy(new_dict);
+          return false;
+       }
     }
   }
-  return false; // No se encontró el elemento en la tabla
+  old_dict->size= new_dict->size;
+  free(old_dict->buckets);
+  old_dict->buckets = new_dict->buckets;
+  free(new_dict);
+  return true;
 }
-
-
 bool dictionary_put(dictionary_t *dictionary, const char *key, void *value) {
-  size_t size= 1ULL << dictionary->exponent;
-  uint32_t hs = _jenkins_hash(key, strlen(key));
-  size_t index = hs & (size-1); //hash dentro del rango del tamaño de la tabla
-  if(dictionary_contains(dictionary,key)){
-    dictionary->buckets[index_search(dictionary,key)].value = value;
-  }
- for (size_t i = index; i < (1ULL << dictionary->exponent); i++) {
-    if (!dictionary->buckets[i].key) { // si está vacío igual lo guardamos en algún vecino (evitar colisiones)
-      size_t j = 1;
-      while ((i + j) < (1ULL << dictionary->exponent)) {
-        if (!dictionary->buckets[i + j].key) { // encontró un vecino vacío
-          index += j;
-          break;
-        }
-        j++;
-      }
-      dictionary->buckets[index].key = key;
-      dictionary->buckets[index].value = value;
-      dictionary->buckets[index].bitmap |= (1ULL << index);
-      dictionary->full_buckets += 1;
-      return true;
+    size_t index = get_index(dictionary,key,strlen(key),dictionary->seed);
+    if ((dictionary_size(dictionary) / dictionary->size) >= 0.65){
+        rehash_table(dictionary);
     }
-  // recorrió todo el vecindario pero estaban todos llenos, prueba en otro bucket
-}
-    //recorrió toda la tabla y estaba llena, hay que hacer rehash.
-    return rehash(dictionary);
-}
+    if(dictionary_contains(dictionary,key)){
+        if( dictionary->destroy && dictionary->buckets[index].value != value){
+            dictionary->destroy(dictionary->buckets[index].value);
+            dictionary->buckets[index].value = value;
+        }
+        return true;
+    }
+    char* new_key = malloc (sizeof(char)*(strlen(key)+1));
+    if (!new_key) return false;
+    strcpy(new_key,key);
+    for(size_t i = index; i<dictionary->size;i++){
+        if(!dictionary->buckets[index].key){
+            dictionary->buckets[index].key = new_key;
+            dictionary->buckets[index].value = value;
+            dictionary->buckets[index].is_deleted = false;
+            dictionary->used_buckets++;
+        }
+    }
+    return true;
+  }
 
-/* Obtiene un valor del diccionario desde su clave. O(1).
- * Pre-condiciones
- * - El diccionario existe
- * - La clave tiene largo mayor a cero
- * Post-condiciones:
- * - Si la clave está presente, retorna el valor asociado y err debe ser false
- * - De otro modo, debe retornar NULL y err debe ser true*/
 void *dictionary_get(dictionary_t *dictionary, const char *key, bool *err) {
   *err = !dictionary_contains(dictionary,key);
-  if(!(*err)) return dictionary->buckets[index_search(dictionary,key)].value;    
+  if(!(*err)) return dictionary->buckets[get_index(dictionary,key,strlen(key),dictionary->seed)].value;    
   return NULL;
 };
-/* Elimina una clave del diccionario. O(1).
- * Pre-condiciones
- * - El diccionario existe
- * - La clave tiene largo mayor a cero
- * Retorna true si la clave estaba presente y se pudo eliminar, o false
- * de otro modo.
- */
-bool dictionary_delete(dictionary_t *dictionary, const char *key) {
-  if(dictionary_contains(dictionary,key)){
-    size_t index = index_search(dictionary,key);
-    dictionary->buckets[index].key = NULL;
-    dictionary->buckets[index].value = NULL;
-    dictionary->buckets[index].bitmap &= ~(1ULL << index);
-    dictionary->full_buckets--;
-    return true;
-}
-return false;
-};
 
-/* Elimina una clave y retorna su valor asociado. O(1).
- * Pre-condiciones:
- * - El diccionario existe
- * - La clave tiene largo mayor a cero
- * Post-condiciones:
- * - Si la calve está presente, retorna el valor asocaido y err debe ser false
- * - De otro modo, debe retornar NULL y err debe ser true
- */
+bool dictionary_delete(dictionary_t *dictionary, const char *key) {
+  bool err = true;
+  if(dictionary_contains(dictionary,key)){
+    if( dictionary->destroy ){
+        dictionary->destroy(dictionary_pop(dictionary,key,&err));
+    }
+    return !err;
+  }
+  return err;
+};
 
 void *dictionary_pop(dictionary_t *dictionary, const char *key, bool *err) {
-  *err = !dictionary_contains(dictionary,key); 
-  if(!(*err)){
-      size_t index = index_search(dictionary,key);
-      void* value = dictionary->buckets[index].value;
-      dictionary_delete (dictionary,key);
-      return value;
-  }
-  return NULL;
+    *err = !dictionary_contains(dictionary,key);
+    if(*err) return NULL;
+    void* value = dictionary_get(dictionary,key,err);
+    size_t index = get_index(dictionary,key,strlen(key),dictionary->seed);
+    free(dictionary->buckets[index].key);
+    dictionary->buckets[index].key = NULL; 
+    dictionary->used_buckets--;
+    return value;
 };
 
 bool dictionary_contains(dictionary_t *dictionary, const char *key) {
-  if(!index_search(dictionary,key)) return false;
-  return true;
+    size_t i = get_index(dictionary,key,strlen(key),dictionary->seed);
+    while(i<dictionary->size && dictionary->buckets[i].key){
+        if(strcmp(dictionary->buckets[i].key,key) == 0) return true;
+        i++;
+    }
+    return false;
 }
-//puedo elegir que devuelva otra variable __inline__ uint32_t?
-size_t dictionary_size(dictionary_t *dictionary) { return dictionary->full_buckets;};
+
+size_t dictionary_size(dictionary_t *dictionary) { return dictionary->used_buckets;}
 
 void dictionary_destroy(dictionary_t *dictionary){
-  if(dictionary){
-    dictionary->destroy(dictionary->buckets);
-    dictionary->destroy(dictionary);
+    for(size_t i = 0; i<dictionary->size;i++){
+        if(dictionary->buckets[i].key){
+            free(dictionary->buckets[i].key);
+        }
     }
-};
+    free(dictionary->buckets);
+    free(dictionary);
+}

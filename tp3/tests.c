@@ -308,10 +308,10 @@ int main(void) {
   return_code += !test_create_dict_nodestroy();
   return_code += !test_put_malloc_fail();
   return_code += !test_put_size();
-  // return_code += !test_pop_get();
-  // return_code += !test_get_errcode();
-  // return_code += !test_put_get_delete_loop();
-  //return_code += !test_put_NULL();
+  return_code += !test_pop_get();
+  return_code += !test_get_errcode();
+  return_code += !test_put_get_delete_loop();
+  return_code += !test_put_NULL();
   // return_code += !test_insert_random_sequence(512, 117, false);
   // return_code += !test_insert_random_sequence(512, 117, true);
   // return_code += !test_insert_random_sequence(2048, 117, false);

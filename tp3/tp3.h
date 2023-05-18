@@ -5,7 +5,6 @@
 #define TP3_H
 
 typedef struct dictionary dictionary_t;
-typedef struct bucket bucket_t;
 typedef void (*destroy_f)(void *);
 
 /* Crea un nuevo diccionario */
