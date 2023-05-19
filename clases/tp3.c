@@ -14,7 +14,6 @@ struct bucket {
     void *value;
 };
 
-
 struct dictionary {
     size_t size;
     size_t bitmap_len;
@@ -75,8 +74,6 @@ dictionary_t *dictionary_create(destroy_f destroy) {
     if(!new_dict->buckets) return NULL;
     return new_dict;
  }
-
-
 bool rehash(dictionary_t* old_dict) {
   printf("\n----------REHASH-----------------\n");
   dictionary_t* new_dict = dictionary_create(old_dict->destroy);

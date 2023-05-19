@@ -4,6 +4,7 @@
         "stdbool.h": "c",
         "test_malloc.h": "c",
         "testing.h": "c",
-        "tp3.h": "c"
+        "tp3.h": "c",
+        "type_traits": "c"
     }
 }
