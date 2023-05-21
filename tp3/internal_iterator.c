@@ -10,5 +10,8 @@
  * Recibe un parámetro extra que puede contener cualquier cosa para permitirle a la función guardar resultados.
  */
 void iterate(dictionary_t* dict, iterate_f f, void* extra){
-    return;
+    size_t i=0;
+    while(dict->buckets[i].key&&!f(dict->buckets[i].key,dict->buckets[i].value,extra) && i<dict->size){
+        i++;
+    }
 }

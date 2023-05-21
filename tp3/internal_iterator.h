@@ -14,7 +14,7 @@
  * y un extra que puede usar para guardar resultados auxiliares.
  * Mientras no devuelva true la iteración continua
  */
-typedef bool (*iterate_f)(const char* key, void* value, void* extra);
+typedef bool (*iterate_f)(const char* key, void* value, void* extra); 
 
 /*
  * Itera cada par clave-valor del diccionario pasandoselo a la función de iteración.

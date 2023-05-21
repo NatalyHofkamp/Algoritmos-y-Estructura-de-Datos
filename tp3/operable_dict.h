@@ -1,7 +1,9 @@
 #include <stdbool.h>
 #include <stddef.h>
-#include "tp3.h"
 
+#include <stdlib.h>
+// #include "tp3.c"
+#include "tp3.h"
 /*
  * Punto extra de operable dict, suma 3 puntos como máximo.
  */
@@ -17,6 +19,7 @@
  * La operación es atómica, si falla dictionary1 queda en el mismo estado que estaba antes del update.
  * Devuelve true si funcionó, false si fayó.
  */
+char* generate_random_string(int length) ;
 bool dictionary_update(dictionary_t *dictionary1, dictionary_t *dictionary2);
 
 /*
