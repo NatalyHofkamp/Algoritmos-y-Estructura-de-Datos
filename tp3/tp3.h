@@ -8,7 +8,7 @@ typedef struct dictionary dictionary_t;
 typedef void (*destroy_f)(void *);
 
 void dictionary_delete_keys(dictionary_t* dictionary);
-dictionary_t* dictionary_copy (dictionary_t* dictionary);
+dictionary_t* dictionary_copy (dictionary_t* dictionary,size_t size);
 /* Crea un nuevo diccionario */
 dictionary_t *dictionary_create(destroy_f destroy);
 
