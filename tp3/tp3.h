@@ -7,8 +7,29 @@
 typedef struct dictionary dictionary_t;
 typedef void (*destroy_f)(void *);
 
+typedef struct bucket{
+    void* key;
+    void* value;
+    bool is_deleted;
+}bucket_t;
+
+struct dictionary {
+    bucket_t* buckets;
+    size_t size;
+    destroy_f destroy;
+    size_t used_buckets;
+    size_t deleted_index;
+    uint32_t seed;
+};
+
 void dictionary_delete_keys(dictionary_t* dictionary);
 dictionary_t* dictionary_copy (dictionary_t* dictionary,size_t size);
+bool delete_single_key(dictionary_t* dictionary,size_t index);
+dictionary_t* new_dictionary(destroy_f destroy,size_t size);
+bool insert_bucket (dictionary_t* dictionary,const char* key, void* value,size_t index);
+bool insert_existing_key(dictionary_t* dictionary,void* value,size_t index);
+size_t get_index(dictionary_t* dictionary, const char *key, size_t len, uint32_t seed, bool* err);
+
 /* Crea un nuevo diccionario */
 dictionary_t *dictionary_create(destroy_f destroy);
 

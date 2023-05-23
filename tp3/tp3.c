@@ -2,20 +2,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-typedef struct bucket{
-    void* key;
-    void* value;
-    bool is_deleted;
-}bucket_t;
-
-struct dictionary {
-    bucket_t* buckets;
-    size_t size;
-    destroy_f destroy;
-    size_t used_buckets;
-    size_t deleted_index;
-    uint32_t seed;
-};
 
 bool delete_single_key(dictionary_t* dictionary,size_t index){
   if(dictionary->buckets[index].key){
