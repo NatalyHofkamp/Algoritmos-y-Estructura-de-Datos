@@ -21,7 +21,7 @@
  */
 char* generate_random_string(int length) ;
 bool dictionary_update(dictionary_t *dictionary1, dictionary_t *dictionary2);
-
+dictionary_t* dictionary_copy (dictionary_t* dictionary);
 /*
  * Combina ambos diccionarios en uno nuevo que contiene solo las claves que están presentes en ambos.
  * En todos los casos se conservan los valores del dictionary1.

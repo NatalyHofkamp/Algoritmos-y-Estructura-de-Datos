@@ -1,5 +1,25 @@
 #include <stdbool.h>
 #include "operable_dict.h"
+#include <string.h>
+
+void* value_copy(void* value){
+    void* bucket = malloc(sizeof(*value));
+    if (!bucket) return NULL;
+    memcpy(bucket, value, sizeof(*value));
+    return bucket;
+}
+
+dictionary_t* dictionary_copy (dictionary_t* dictionary){
+  dictionary_t* copy = new_dictionary(dictionary->destroy,dictionary->size);
+  for(size_t i= 0;i< dictionary->size;i++){
+    if(dictionary->buckets[i].key){
+        copy->buckets[i].key = key_copy(dictionary->buckets[i].key);
+        copy->buckets[i].value = value_copy (dictionary->buckets[i].value);
+        copy->used_buckets++;
+      } 
+    }
+  return copy;
+}
 
 /*
  * Punto extra de operable dict, suma 3 puntos como máximo.
@@ -15,24 +35,17 @@
  */
 
 bool dictionary_update(dictionary_t *dictionary1, dictionary_t *dictionary2){
-    if(!dictionary1 || !dictionary2) return NULL;
-    dictionary_t* copy = dictionary_copy(dictionary1,dictionary1->size);
+    if(!dictionary1 || !dictionary2) return false;
+    dictionary_t* copy = dictionary_copy(dictionary1);
     if(!copy) return false;
     for( size_t i = 0; i<dictionary2->size;i++){
-        char* key_dict2 = dictionary2->buckets[i].key;
-        void* value_dict2 = dictionary2->buckets[i].value;
-        if (key_dict2){
-            if(!dictionary_put(dictionary1,key_dict2,value_dict2)){
-                dictionary_delete_keys(copy);
-                dictionary_destroy(dictionary1);
-                dictionary1 = copy;
-                dictionary_delete_keys(copy);
-                free(copy);
+        if (dictionary2->buckets[i].key){
+            if(!dictionary_put(dictionary1,dictionary2->buckets[i].key,dictionary2->buckets[i].value)){
+                change_buckets(copy,dictionary1);
                 return false;
             }
         }
     }
-    dictionary_delete_keys(copy);
     dictionary_destroy(copy);
     return true;
 }
@@ -45,12 +58,14 @@ bool dictionary_update(dictionary_t *dictionary1, dictionary_t *dictionary2){
 dictionary_t* dictionary_and(dictionary_t *dictionary1, dictionary_t *dictionary2){
     if(!dictionary1 || !dictionary2) return NULL;
     dictionary_t* new_dict = dictionary_create(dictionary1->destroy);
+    if(!new_dict) return NULL;
     for(size_t i =0; i<dictionary1->size;i++){
-        if(dictionary1->buckets[i].key){
-            if(dictionary_contains(dictionary2,dictionary1->buckets[i].key)){
-                if(!dictionary_put(new_dict,dictionary1->buckets[i].key,dictionary1->buckets[i].value))
-                return NULL;
-            }
+        if(dictionary1->buckets[i].key && dictionary_contains(dictionary2,dictionary1->buckets[i].key)){
+            if(!dictionary_put(new_dict,dictionary1->buckets[i].key,dictionary1->buckets[i].value)){
+                    dictionary_delete_keys(new_dict);
+                    dictionary_destroy(new_dict);
+                    return NULL;
+                }
         }
     }
     return new_dict;
@@ -61,17 +76,23 @@ dictionary_t* dictionary_and(dictionary_t *dictionary1, dictionary_t *dictionary
  * En caso de que ambos tengan una misma clave se conserva el valor de dictionary1.
  * Devuelve NULL si falla.
  */
+
+bool insert_dictionary_elements(dictionary_t*new_dict ,dictionary_t* dictionary){
+    for(size_t i = 0; i<dictionary->size;i++){
+        if(dictionary->buckets[i].key){
+            if(!dictionary_contains(new_dict,dictionary->buckets[i].key)){
+                if(!dictionary_put(new_dict,dictionary->buckets[i].key,dictionary->buckets[i].value))
+                return false;
+            }
+        }
+    }
+    return true;
+}
 dictionary_t* dictionary_or(dictionary_t *dictionary1, dictionary_t *dictionary2){
     if(!dictionary1 || !dictionary2) return NULL;
     dictionary_t* new_dict = dictionary_and(dictionary1,dictionary2);
-     for(size_t i = 0; i<dictionary1->size;i++){
-            if(dictionary1->buckets[i].key){
-                if(!dictionary_contains(new_dict,dictionary1->buckets[i].key)){
-                    if(!dictionary_put(new_dict,dictionary1->buckets[i].key,dictionary1->buckets[i].value))
-                    return NULL;
-                }
-            }
-    }
+    if(!insert_dictionary_elements(new_dict,dictionary1)) return NULL;
+    if(!insert_dictionary_elements(new_dict,dictionary2)) return NULL;
     return new_dict;
 }
 
@@ -82,7 +103,7 @@ dictionary_t* dictionary_or(dictionary_t *dictionary1, dictionary_t *dictionary2
  *  - Tienen la misma cantidad de claves
  */
 bool dictionary_equals(dictionary_t *dictionary1, dictionary_t *dictionary2){
-    if(!dictionary1 || !dictionary2) return NULL;
+    if(!dictionary1 || !dictionary2) return false;
     bool err = true;
     for(size_t i=0;i<dictionary2->size;i++){
         if(dictionary2->buckets[i].key){

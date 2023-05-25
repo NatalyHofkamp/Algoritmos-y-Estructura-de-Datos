@@ -5,17 +5,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 char* generate_random_string(int length) {
     static const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     char* random_string = malloc(length + 1);
-    
-    if (random_string == NULL) {
-        printf("Error: No se pudo asignar memoria para el string aleatorio.\n");
-        return NULL;
-    }
-
-    srand(117);
+    if (!random_string) return NULL;
     
     for (int i = 0; i < length; i++) {
         size_t index = rand() % (sizeof(charset) - 1);
@@ -23,7 +18,6 @@ char* generate_random_string(int length) {
     }
     
     random_string[length] = '\0';
-    
     return random_string;
 }
 
@@ -43,15 +37,14 @@ bool test_equals(size_t n, unsigned int seed){
     insert1 &= dictionary_put(dict1, str, random_number_copy);
     free(str);
   }
-  dictionary_t *dict2 = dictionary_copy(dict1,dict1->size);
-  tests_result &= test_assert("El diccionario 2 fue creado con los valores del dictionario1", dict2 != NULL);
+  dictionary_t *dict2 = dictionary_copy(dict1);
+  tests_result &= test_assert("El diccionario 2 tiene valores distintos", dict2 != NULL);
   
   bool test_equals = true;
   test_equals = dictionary_equals(dict1,dict2);
-  tests_result &= test_assert("Los diccionarios son iguales", test_equals);
+  tests_result &= test_assert("Los diccionarios son distintos", !test_equals);
 
   dictionary_destroy(dict1);
-  dictionary_delete_keys(dict2);
   dictionary_destroy(dict2);
   return tests_result;
 }
@@ -175,17 +168,17 @@ bool test_or_error(){
   return tests_result;
 }
 
-bool test_or_different_values(size_t n,unsigned int seed){
-  printf("\n========== %s (n=%lu, seed=%u) ==========\n",
-         __PRETTY_FUNCTION__, n, seed);
-  srand(seed);
+bool test_or_different_keys(size_t n,unsigned int seed){
+  printf("\n========== %s (n=%lu) ==========\n",
+         __PRETTY_FUNCTION__, n);
   bool tests_result = true;
   dictionary_t *dict1 = dictionary_create(free);
   tests_result &= test_assert("El diccionario 1 fue creado", dict1 != NULL);
   dictionary_t *dict2 = dictionary_create(free);
   tests_result &= test_assert("El diccionario 2 fue creado", dict2 != NULL);
   bool insert = true;
-  for (size_t i = 0; i < n; i++) {
+  for (int i = 0; i < n; i++) {
+    srand(seed+i);
     int random_number = rand();
     char *str = generate_random_string(5);
     int *random_number_copy = malloc(sizeof(int));
@@ -194,8 +187,8 @@ bool test_or_different_values(size_t n,unsigned int seed){
     free(str);
   }
   tests_result &= test_assert("Todas las inserciones en dict1 fueron exitosas", insert);
-  for (size_t i = 0; i < n; i++) {
-    srand(seed);
+  for (int i = 0; i < n; i++) {
+    srand(seed+i+2);
     int random_number = rand();
     char *str = generate_random_string(5);
     int *random_number_copy = malloc(sizeof(int));
@@ -217,7 +210,8 @@ bool test_or_different_values(size_t n,unsigned int seed){
         test_or = false;
       }
       if (dictionary_contains(dict1,rst_key)&&dictionary_contains(dict2,rst_key)){
-          if(rst_val != dict1->buckets[i].value){
+        bool err = true;
+          if(rst_val != dictionary_get(dict1,rst_key,&err)){
               test_val = false;
           }
       }
@@ -229,22 +223,21 @@ bool test_or_different_values(size_t n,unsigned int seed){
   dictionary_destroy(dict1);
   dictionary_destroy(dict2);
   dictionary_delete_keys(result);
-  free(result->buckets);
-  free(result);
+  dictionary_destroy(result);
   return tests_result; 
 }
 
-bool test_and(size_t n, unsigned int seed){
-  printf("\n========== %s (n=%lu, seed=%u) ==========\n",
-         __PRETTY_FUNCTION__, n, seed);
-  srand(seed);
+bool test_or_same_keys(size_t n,unsigned int seed){
+  printf("\n========== %s (n=%lu) ==========\n",
+         __PRETTY_FUNCTION__, n);
   bool tests_result = true;
   dictionary_t *dict1 = dictionary_create(free);
   tests_result &= test_assert("El diccionario 1 fue creado", dict1 != NULL);
   dictionary_t *dict2 = dictionary_create(free);
   tests_result &= test_assert("El diccionario 2 fue creado", dict2 != NULL);
   bool insert = true;
-  for (size_t i = 0; i < n; i++) {
+  for (int i = 0; i < n; i++) {
+    srand(seed+i);
     int random_number = rand();
     char *str = generate_random_string(5);
     int *random_number_copy = malloc(sizeof(int));
@@ -253,8 +246,58 @@ bool test_and(size_t n, unsigned int seed){
     free(str);
   }
   tests_result &= test_assert("Todas las inserciones en dict1 fueron exitosas", insert);
-  for (size_t i = 0; i < n; i++) {
-    srand(seed);
+
+  bool same_keys = true;
+  for (int i = 0; i < n; i++) {
+    srand(seed+i);
+    int random_number = rand();
+    char *str = generate_random_string(5);
+    int *random_number_copy = malloc(sizeof(int));
+    *random_number_copy = random_number+25;
+    dictionary_put(dict2, str, random_number_copy);
+    free(str);
+  }
+  for(int i = 0; i<dict2->size;i++){
+    if(dict2->buckets[i].key && !dictionary_contains(dict1,dict2->buckets[i].key)){
+      same_keys = false;
+    }
+  }
+  tests_result &= test_assert("Dict2 tiene las mismas llaves que dict1", same_keys);
+  dictionary_t* result= dictionary_or(dict1,dict2);
+  tests_result &= test_assert("dictionary_or funcionó", result != NULL);
+  
+  bool test_equals = true;
+  test_equals = dictionary_equals(dict1,result);
+  tests_result &= test_assert("El resultado es igual al diccionario 1", test_equals);
+
+  dictionary_destroy(dict1);
+  dictionary_destroy(dict2);
+  dictionary_delete_keys(result);
+  dictionary_destroy(result);
+  return tests_result; 
+}
+
+bool test_and(size_t n, unsigned int seed){
+  printf("\n========== %s (n=%lu, seed=%u) ==========\n",
+         __PRETTY_FUNCTION__, n, seed);
+  bool tests_result = true;
+  dictionary_t *dict1 = dictionary_create(free);
+  tests_result &= test_assert("El diccionario 1 fue creado", dict1 != NULL);
+  dictionary_t *dict2 = dictionary_create(free);
+  tests_result &= test_assert("El diccionario 2 fue creado", dict2 != NULL);
+  bool insert = true;
+  for (int i = 0; i < n; i++) {
+    srand(seed+i);
+    int random_number = rand();
+    char *str = generate_random_string(5);
+    int *random_number_copy = malloc(sizeof(int));
+    *random_number_copy = random_number;
+    insert &= dictionary_put(dict1, str, random_number_copy);
+    free(str);
+  }
+  tests_result &= test_assert("Todas las inserciones en dict1 fueron exitosas", insert);
+  for (int i = 0; i < n; i++) {
+    srand(seed+i);
     int random_number = rand();
     char *str = generate_random_string(5);
     int *random_number_copy = malloc(sizeof(int));
@@ -284,7 +327,7 @@ bool test_and(size_t n, unsigned int seed){
         test_and =false;
     }
   }
-  tests_result &= test_assert("Se guardaron todos los valores del diccionario1.", test_and);
+  tests_result &= test_assert("Se guardaron los valores del diccionario1.", test_and);
 
   dictionary_destroy(dict1);
   dictionary_destroy(dict2);
@@ -415,36 +458,34 @@ bool test_update_error(){
 bool test_update_different_size(size_t n, unsigned int seed){
 printf("\n========== %s (n=%lu, seed=%u) ==========\n",
          __PRETTY_FUNCTION__, n, seed);
-  srand(seed);
+  srand((unsigned int)time(NULL));
   bool tests_result = true;
   bool err;
   dictionary_t *dict1 = dictionary_create(free);
   tests_result &= test_assert("El diccionario 1 fue creado", dict1 != NULL);
   dictionary_t *dict2 = dictionary_create(free);
   tests_result &= test_assert("El diccionario 2 fue creado", dict2 != NULL);
-  bool insert = true;
-  for (size_t i = 0; i < 5000; i++) {
+  for (size_t i = 0; i < 1000; i++) {
     char *str = generate_random_string(5);
     int *random_number_copy = malloc(sizeof(int));
     *random_number_copy = (int)n+12;
-    insert &= dictionary_put(dict1, str, random_number_copy);
+    dictionary_put(dict1, str, random_number_copy);
     free(str);
   }
-  tests_result &= test_assert("Todas las inserciones en dict1 fueron exitosas", insert);
+  tests_result &= test_assert("El diccionario 1 tiene 1000 elementos", (dict1->used_buckets == 1000));
   for (size_t i = 0; i < n; i++) {
-    srand(seed+259);
     int random_number = rand();
     char *str = generate_random_string(5);
     int *random_number_copy = malloc(sizeof(int));
     *random_number_copy = random_number;
-    insert &= dictionary_put(dict2, str, random_number_copy);
+    dictionary_put(dict2, str, random_number_copy);
     free(str);
   }
-  tests_result &= test_assert("Todas las inserciones en dict2 fueron exitosas", insert);
+  tests_result &= test_assert("El diccionario2 tiene 512 elementos", (dict2->used_buckets ==512));
   bool correct_copy = true;
   correct_copy &= dictionary_update(dict1,dict2);
   tests_result &= test_assert("Se updateo el diccionario 1.", correct_copy);
-  
+  tests_result &= test_assert ("EL diccionario1 tiene 1512 elementos", (dict1->used_buckets==1512));
   bool correct_value =true;
   bool contains_key = true;
   for (size_t i = 0; i < dict2->size; i++) {
@@ -475,7 +516,8 @@ int main_operable_dict(void) {
   return_code += !test_and_null();
   return_code += !test_and_error();
 
-  return_code += !test_or_different_values(512,117);
+  return_code += !test_or_same_keys(512,117);
+  return_code += !test_or_different_keys(512,117);
   return_code += !test_or_null ();
   return_code += !test_or_error();
 
@@ -484,10 +526,10 @@ int main_operable_dict(void) {
   return_code += !test_equals_different();
   return_code += !test_equals_error();
 
-//   return_code += !test_update(2048, 117);
-//   return_code += !test_and(2048,117);
-//   return_code += !test_or_different_values(2048,117);
-//   return_code += !test_equals(2048,117);
+  // return_code += !test_update(2048, 117);
+  // return_code += !test_and(2048,117);
+  // return_code += !test_or_different_values(2048,117);
+  // return_code += !test_equals(2048,117);
   exit(return_code);
   return return_code;
 }

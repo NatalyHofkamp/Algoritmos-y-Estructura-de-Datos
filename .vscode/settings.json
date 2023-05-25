@@ -5,6 +5,7 @@
         "test_malloc.h": "c",
         "testing.h": "c",
         "tp3.h": "c",
-        "type_traits": "c"
+        "type_traits": "c",
+        "internal_iterator.h": "c"
     }
 }

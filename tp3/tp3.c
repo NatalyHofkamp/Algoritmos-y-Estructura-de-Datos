@@ -4,14 +4,12 @@
 #include <stdio.h>
 
 bool delete_single_key(dictionary_t* dictionary,size_t index){
-  if(dictionary->buckets[index].key){
-    free(dictionary->buckets[index].key);
-    dictionary->buckets[index].key = NULL; 
-    dictionary->buckets[index].is_deleted = true;
-    dictionary->used_buckets--;
-    return true;
-  }
-  return false;
+  if(!dictionary->buckets[index].key) return false;
+  free(dictionary->buckets[index].key);
+  dictionary->buckets[index].key = NULL; 
+  dictionary->buckets[index].is_deleted = true;
+  dictionary->used_buckets--;
+  return true;
 }
 
 void dictionary_delete_keys(dictionary_t* dictionary){
@@ -101,8 +99,7 @@ dictionary_t* new_dictionary(destroy_f destroy,size_t size){
   return new_dict;
 }
 
-bool rehash_table(dictionary_t* old_dict) {
-  dictionary_t* new_dict = dictionary_copy(old_dict,old_dict->size*2);
+bool change_buckets(dictionary_t* new_dict,dictionary_t* old_dict){
   dictionary_delete_keys(old_dict);
   old_dict->used_buckets = new_dict->used_buckets;
   old_dict->size= new_dict->size;
@@ -110,6 +107,22 @@ bool rehash_table(dictionary_t* old_dict) {
   old_dict->buckets = new_dict->buckets;
   free(new_dict);
   return true;
+}
+
+bool rehash_table(dictionary_t* old_dict) {
+  dictionary_t*  new_dict = new_dictionary(old_dict->destroy,old_dict->size*2);
+  if(!new_dict) return NULL;
+  for(size_t i= 0;i< old_dict->size;i++){
+    if(old_dict->buckets[i].key){
+      if(!dictionary_put(new_dict,old_dict->buckets[i].key,old_dict->buckets[i].value)){
+        dictionary_delete_keys(new_dict);
+        free(new_dict);
+        return NULL;
+      } 
+    }
+  }
+  dictionary_delete_keys(old_dict);
+  return change_buckets(new_dict,old_dict);
 }
 
 dictionary_t *dictionary_create(destroy_f destroy) { 
@@ -135,24 +148,18 @@ size_t get_index(dictionary_t* dictionary, const char *key, size_t len, uint32_t
     return 0;
 }
 
-dictionary_t* dictionary_copy (dictionary_t* dictionary,size_t size){
-  dictionary_t* copy = new_dictionary(dictionary->destroy,size);
-  for(size_t i= 0;i< dictionary->size;i++){
-    if(dictionary->buckets[i].key){
-      if(!dictionary_put(copy,dictionary->buckets[i].key,dictionary->buckets[i].value)){
-        dictionary_delete_keys(copy);
-        free(copy);
-        return NULL;
-      } 
-    }
-  }
-  return copy;
+
+char* key_copy(const char* key){
+  if(!key) return NULL;
+  char* new_key = malloc (sizeof(char)*(strlen(key)+1));
+  if (!new_key) return NULL;
+  strcpy(new_key,key);
+  return new_key;
 }
 
 bool insert_bucket (dictionary_t* dictionary,const char* key, void* value,size_t index){
-  char* new_key = malloc (sizeof(char)*(strlen(key)+1));
-  if (!new_key) return false;
-  strcpy(new_key,key);
+  char* new_key = key_copy(key);
+  if(!new_key) return NULL;
   if(dictionary->deleted_index) index = dictionary->deleted_index;
   dictionary->buckets[index].key = new_key;
   dictionary->buckets[index].value = value;
@@ -210,12 +217,12 @@ bool dictionary_contains(dictionary_t *dictionary, const char *key) {
 size_t dictionary_size(dictionary_t *dictionary) { return dictionary->used_buckets;}    
 
 void dictionary_destroy(dictionary_t *dictionary){
-  size_t i = 0;
-  while(dictionary->used_buckets>0){
-    if(delete_single_key(dictionary,i) && dictionary->destroy){
+  //no utilizo el delete porque al ingresar en esa función busca el índice de la llave, pero 
+  //yo ya lo tengo y perdería tiempo en buscarlo
+  for(size_t i=0;0<dictionary->used_buckets;i++){
+     if(delete_single_key(dictionary,i) && dictionary->destroy){
       dictionary->destroy(dictionary->buckets[i].value);
     }
-    i++;
   }
   free(dictionary->buckets);
   free(dictionary);

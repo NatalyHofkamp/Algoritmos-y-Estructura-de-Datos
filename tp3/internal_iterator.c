@@ -11,7 +11,7 @@
  */
 void iterate(dictionary_t* dict, iterate_f f, void* extra){
     size_t i=0;
-    while(dict->buckets[i].key&&!f(dict->buckets[i].key,dict->buckets[i].value,extra) && i<dict->size){
+    while(i<dict->size && dict->buckets[i].key&&!f(dict->buckets[i].key,dict->buckets[i].value,extra)){
         i++;
     }
 }

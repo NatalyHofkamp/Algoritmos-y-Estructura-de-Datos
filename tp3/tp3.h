@@ -22,8 +22,9 @@ struct dictionary {
     uint32_t seed;
 };
 
+char* key_copy(const char* key);
 void dictionary_delete_keys(dictionary_t* dictionary);
-dictionary_t* dictionary_copy (dictionary_t* dictionary,size_t size);
+bool change_buckets(dictionary_t* new_dict,dictionary_t* old_dict);
 bool delete_single_key(dictionary_t* dictionary,size_t index);
 dictionary_t* new_dictionary(destroy_f destroy,size_t size);
 bool insert_bucket (dictionary_t* dictionary,const char* key, void* value,size_t index);
