@@ -297,7 +297,7 @@ bool test_and(size_t n, unsigned int seed){
   }
   tests_result &= test_assert("Todas las inserciones en dict1 fueron exitosas", insert);
   for (int i = 0; i < n; i++) {
-    srand(seed+i);
+    srand(seed-2+i);
     int random_number = rand();
     char *str = generate_random_string(5);
     int *random_number_copy = malloc(sizeof(int));
@@ -321,9 +321,10 @@ bool test_and(size_t n, unsigned int seed){
   tests_result &= test_assert("todos los elementos se encuentran en ambos diccionarios", test_both);
 
   for(size_t i = 0; i<dict1->size;i++){
+    bool err = true;
     if(dict1->buckets[i].key&&
       dictionary_contains(dict2,dict1->buckets[i].key) &&
-      result->buckets[i].value != dict1->buckets[i].value){
+      result->buckets[i].value != dictionary_get(dict1,result->buckets[i].key,&err)){
         test_and =false;
     }
   }
@@ -526,10 +527,10 @@ int main_operable_dict(void) {
   return_code += !test_equals_different();
   return_code += !test_equals_error();
 
-  // return_code += !test_update(2048, 117);
-  // return_code += !test_and(2048,117);
-  // return_code += !test_or_different_values(2048,117);
-  // return_code += !test_equals(2048,117);
+  return_code += !test_update(2048, 117);
+  return_code += !test_and(2048,117);
+  return_code += !test_or_different_keys(2048,117);
+  return_code += !test_equals(2048,117);
   exit(return_code);
   return return_code;
 }
