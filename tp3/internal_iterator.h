@@ -1,6 +1,8 @@
+#include "tp3.h"
 #include <stdbool.h>
 #include <stddef.h>
-#include "tp3.h"
+#include <stdlib.h>
+
 
 /*
  * Punto extra de internal iterator, suma 1 punto como máximo.

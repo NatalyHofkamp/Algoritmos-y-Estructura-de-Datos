@@ -6,6 +6,7 @@
         "testing.h": "c",
         "tp3.h": "c",
         "type_traits": "c",
-        "internal_iterator.h": "c"
+        "internal_iterator.h": "c",
+        "operable_dict.h": "c"
     }
 }
