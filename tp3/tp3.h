@@ -23,14 +23,13 @@ struct dictionary {
 };
 
 char* key_copy(const char* key);
-void dictionary_delete_keys(dictionary_t* dictionary);
+void delete_keys(dictionary_t* dictionary);
 bool change_buckets(dictionary_t* new_dict,dictionary_t* old_dict);
 bool delete_single_key(dictionary_t* dictionary,size_t index);
 dictionary_t* new_dictionary(destroy_f destroy,size_t size);
 bool insert_bucket (dictionary_t* dictionary,const char* key, void* value,size_t index);
 bool insert_existing_key(dictionary_t* dictionary,void* value,size_t index);
-size_t get_index(dictionary_t* dictionary, const char *key, size_t len, uint32_t seed, bool* err);
-
+size_t get_index(dictionary_t* dictionary, const char *key, bool* err);
 /* Crea un nuevo diccionario */
 dictionary_t *dictionary_create(destroy_f destroy);
 

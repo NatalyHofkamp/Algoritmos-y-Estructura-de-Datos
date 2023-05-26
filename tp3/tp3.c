@@ -12,7 +12,7 @@ bool delete_single_key(dictionary_t* dictionary,size_t index){
   return true;
 }
 
-void dictionary_delete_keys(dictionary_t* dictionary){
+void delete_keys(dictionary_t* dictionary){
   for(size_t i=0;i< dictionary->size;i++){
       delete_single_key(dictionary,i);
   }
@@ -100,7 +100,7 @@ dictionary_t* new_dictionary(destroy_f destroy,size_t size){
 }
 
 bool change_buckets(dictionary_t* new_dict,dictionary_t* old_dict){
-  dictionary_delete_keys(old_dict);
+  delete_keys(old_dict);
   old_dict->used_buckets = new_dict->used_buckets;
   old_dict->size= new_dict->size;
   free(old_dict->buckets);
@@ -113,41 +113,37 @@ bool rehash_table(dictionary_t* old_dict) {
   dictionary_t*  new_dict = new_dictionary(old_dict->destroy,old_dict->size*2);
   if(!new_dict) return NULL;
   for(size_t i= 0;i< old_dict->size;i++){
-    if(old_dict->buckets[i].key){
-      if(!dictionary_put(new_dict,old_dict->buckets[i].key,old_dict->buckets[i].value)){
-        dictionary_delete_keys(new_dict);
-        free(new_dict);
-        return NULL;
-      } 
+    if(old_dict->buckets[i].key && !dictionary_put(new_dict,
+        old_dict->buckets[i].key,old_dict->buckets[i].value))
+    {
+      delete_keys(new_dict);
+      dictionary_destroy(new_dict);
+      return NULL;
     }
   }
-  dictionary_delete_keys(old_dict);
+  delete_keys(old_dict);
   return change_buckets(new_dict,old_dict);
 }
 
-dictionary_t *dictionary_create(destroy_f destroy) { 
-    return new_dictionary(destroy,1021);
-};
-size_t get_index(dictionary_t* dictionary, const char *key, size_t len, uint32_t seed, bool* err) {
-    size_t hash_key = murmurhash(key, strlen(key), dictionary->seed);
-    size_t real_index = hash_key % dictionary->size;
-    *err = true;
-    do{
-        if (dictionary->buckets[real_index].key && strcmp(dictionary->buckets[real_index].key, key) == 0) {
-            *err = false;
-            return real_index;
-        } 
-        if(dictionary->buckets[real_index].is_deleted){
-          dictionary->deleted_index = real_index;
-        }
-        if (!dictionary->buckets[real_index].key && !dictionary->buckets[real_index].is_deleted) {
-            return real_index;
-        }
-        real_index = (real_index+1)%(dictionary->size);
-    }while (real_index != hash_key % dictionary->size);
-    return 0;
+size_t get_index(dictionary_t* dictionary, const char *key, bool* err) {
+  size_t hash_key = murmurhash(key, strlen(key), dictionary->seed);
+  size_t real_index = hash_key % dictionary->size;
+  *err = true;
+  do{
+      if (dictionary->buckets[real_index].key && strcmp(dictionary->buckets[real_index].key, key) == 0) {
+          *err = false;
+          return real_index;
+      } 
+      if(dictionary->buckets[real_index].is_deleted){
+        dictionary->deleted_index = real_index;
+      }
+      if (!dictionary->buckets[real_index].key && !dictionary->buckets[real_index].is_deleted) {
+          return real_index;
+      }
+      real_index = (real_index+1)%(dictionary->size);
+  }while (real_index != hash_key % dictionary->size);
+  return 0;
 }
-
 
 char* key_copy(const char* key){
   if(!key) return NULL;
@@ -175,18 +171,22 @@ bool insert_existing_key(dictionary_t* dictionary,void* value,size_t index){
   return true;
 }
 
+dictionary_t *dictionary_create(destroy_f destroy) { 
+    return new_dictionary(destroy,1021);
+};
+
 bool dictionary_put(dictionary_t *dictionary, const char *key, void *value) {
     if ((float)dictionary_size(dictionary) / (float) dictionary->size >=0.6) {
      if(!rehash_table(dictionary)) return false;
     }
     bool err = true;
-    size_t index = get_index(dictionary,key,strlen(key),dictionary->seed,&err);
+    size_t index = get_index(dictionary,key,&err);
     if(!err) return insert_existing_key(dictionary,value,index);
     return insert_bucket (dictionary,key,value,index);
   }
 
 void *dictionary_get(dictionary_t *dictionary, const char *key, bool *err) {
-  size_t index = get_index(dictionary,key,strlen(key),dictionary->seed,err);
+  size_t index = get_index(dictionary,key,err);
   if(!(*err)) return dictionary->buckets[index].value;    
   return NULL;
 };
@@ -199,30 +199,23 @@ bool dictionary_delete(dictionary_t *dictionary, const char *key) {
   return !err;
 };
 
-
 void *dictionary_pop(dictionary_t *dictionary, const char *key, bool *err) {
-    size_t index = get_index(dictionary,key,strlen(key),dictionary->seed,err);
-    if(*err) return NULL;
-    void* value = dictionary->buckets[index].value;
-    delete_single_key(dictionary,index);
+    void* value = dictionary_get(dictionary,key,err);
+    delete_single_key(dictionary,get_index(dictionary,key,err));
     return value;
 }
 
 bool dictionary_contains(dictionary_t *dictionary, const char *key) {
     bool err = true;
-    get_index(dictionary,key,strlen(key),dictionary->seed,&err);
+    get_index(dictionary,key,&err);
     return !err;
 }
 
 size_t dictionary_size(dictionary_t *dictionary) { return dictionary->used_buckets;}    
 
 void dictionary_destroy(dictionary_t *dictionary){
-  //no utilizo el delete porque al ingresar en esa función busca el índice de la llave, pero 
-  //yo ya lo tengo y perdería tiempo en buscarlo
-  for(size_t i=0;0<dictionary->used_buckets;i++){
-     if(delete_single_key(dictionary,i) && dictionary->destroy){
-      dictionary->destroy(dictionary->buckets[i].value);
-    }
+  for(size_t i=0;0<dictionary->used_buckets;i++){ 
+    dictionary_delete(dictionary,dictionary->buckets[i].key);
   }
   free(dictionary->buckets);
   free(dictionary);

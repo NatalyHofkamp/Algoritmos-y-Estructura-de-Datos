@@ -62,10 +62,10 @@ dictionary_t* dictionary_and(dictionary_t *dictionary1, dictionary_t *dictionary
     for(size_t i =0; i<dictionary1->size;i++){
         if(dictionary1->buckets[i].key && dictionary_contains(dictionary2,dictionary1->buckets[i].key)){
             if(!dictionary_put(new_dict,dictionary1->buckets[i].key,dictionary1->buckets[i].value)){
-                    dictionary_delete_keys(new_dict);
-                    dictionary_destroy(new_dict);
-                    return NULL;
-                }
+                delete_keys(new_dict);
+                dictionary_destroy(new_dict);
+                return NULL;
+            }
         }
     }
     return new_dict;
@@ -91,8 +91,14 @@ bool insert_dictionary_elements(dictionary_t*new_dict ,dictionary_t* dictionary)
 dictionary_t* dictionary_or(dictionary_t *dictionary1, dictionary_t *dictionary2){
     if(!dictionary1 || !dictionary2) return NULL;
     dictionary_t* new_dict = dictionary_and(dictionary1,dictionary2);
-    if(!insert_dictionary_elements(new_dict,dictionary1)) return NULL;
-    if(!insert_dictionary_elements(new_dict,dictionary2)) return NULL;
+    if(!new_dict) return NULL;
+    if(!insert_dictionary_elements(new_dict,dictionary1) || 
+       !insert_dictionary_elements(new_dict,dictionary2))
+    {
+        delete_keys(new_dict);
+        dictionary_destroy(new_dict);
+        return NULL;
+    }
     return new_dict;
 }
 

@@ -146,7 +146,7 @@ bool test_or_null (){
   tests_result &= test_assert("El resultado es igual al diccionario1", test_or);
   dictionary_destroy(dict1);
   dictionary_destroy(dict2);
-  dictionary_delete_keys(result);
+  delete_keys(result);
   free(result->buckets);
   free(result);
   return tests_result; 
@@ -222,7 +222,7 @@ bool test_or_different_keys(size_t n,unsigned int seed){
 
   dictionary_destroy(dict1);
   dictionary_destroy(dict2);
-  dictionary_delete_keys(result);
+  delete_keys(result);
   dictionary_destroy(result);
   return tests_result; 
 }
@@ -272,7 +272,7 @@ bool test_or_same_keys(size_t n,unsigned int seed){
 
   dictionary_destroy(dict1);
   dictionary_destroy(dict2);
-  dictionary_delete_keys(result);
+  delete_keys(result);
   dictionary_destroy(result);
   return tests_result; 
 }
@@ -332,9 +332,8 @@ bool test_and(size_t n, unsigned int seed){
 
   dictionary_destroy(dict1);
   dictionary_destroy(dict2);
-  dictionary_delete_keys(result);
-  free(result->buckets);
-  free(result);
+  delete_keys(result);
+  dictionary_destroy(result);
   return tests_result;
 }
 bool test_and_null() {
@@ -368,9 +367,8 @@ bool test_and_null() {
 
   dictionary_destroy(dict1);
   dictionary_destroy(dict2);
-  dictionary_delete_keys(result);
-  free(result->buckets);
-  free(result);
+  delete_keys(result);
+  dictionary_destroy(result);
   return tests_result;
 }
 
@@ -436,7 +434,7 @@ bool test_update(size_t n, unsigned int seed) {
   tests_result &= test_assert("Todos los valores de dict2 están en dict1", correct_value);
   
   dictionary_destroy(dict1);
-  dictionary_delete_keys(dict2);
+  delete_keys(dict2);
   dictionary_destroy(dict2);
   return tests_result;
 }
@@ -501,7 +499,7 @@ printf("\n========== %s (n=%lu, seed=%u) ==========\n",
   tests_result &= test_assert("Todos los valores de dict2 están en dict1", correct_value);
   
   dictionary_destroy(dict1);
-  dictionary_delete_keys(dict2);
+  delete_keys(dict2);
   dictionary_destroy(dict2);
   return tests_result;
 }
