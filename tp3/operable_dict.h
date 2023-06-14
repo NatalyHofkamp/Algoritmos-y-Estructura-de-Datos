@@ -2,7 +2,6 @@
 #include <stddef.h>
 
 #include <stdlib.h>
-// #include "tp3.c"
 #include "tp3.h"
 /*
  * Punto extra de operable dict, suma 3 puntos como máximo.

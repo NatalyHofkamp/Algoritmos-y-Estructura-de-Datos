@@ -504,7 +504,7 @@ printf("\n========== %s (n=%lu, seed=%u) ==========\n",
   return tests_result;
 }
 
-int main_operable_dict(void) {
+int main(void) {
   srand(117);
   int return_code = 0;
   return_code += !test_update(536, 117);

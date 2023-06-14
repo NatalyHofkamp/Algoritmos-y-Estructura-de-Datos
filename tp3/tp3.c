@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h> 
 
 bool delete_single_key(dictionary_t* dictionary,size_t index){
   if(!dictionary->buckets[index].key) return false;
@@ -18,69 +19,21 @@ void delete_keys(dictionary_t* dictionary){
   }
 }
 
-size_t murmurhash(const char *key, size_t len, uint32_t seed) {
+uint32_t murmurhash( const char * key, size_t len, uint32_t seed )
+{
+    uint32_t hash;
+    size_t i;
+    hash = 0;
+    for ( i = 0; i < len; i++ ) {
+        hash += key[i];
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    }
+    hash += (hash << 3);
+    hash ^= (hash >> 11);
+    hash += (hash << 15);
 
-  uint32_t c1 = 0xcc9e2d51;
-  uint32_t c2 = 0x1b873593;
-  uint32_t r1 = 15;
-  uint32_t r2 = 13;
-  uint32_t m = 5;
-  uint32_t n = 0xe6546b64;
-  uint32_t h = 0;
-  uint32_t k = 0;
-  uint8_t *d = (uint8_t *)key; // 32 bit extract from `key'
-  const uint32_t *chunks = NULL;
-  const uint8_t *tail = NULL; // tail - last 8 bytes
-  size_t i = 0;
-  size_t l = len / 4; // chunk length
-
-  h = seed;
-
-  chunks = (const uint32_t *)(d + l * 4); // body
-  tail = (const uint8_t *)(d + l * 4);    // last 8 byte chunk of `key'
-
-  // for each 4 byte chunk of `key'
-  for (i = -l; i != 0; ++i) {
-    // next 4 byte chunk of `key'
-    k = chunks[i];
-
-    // encode next 4 byte chunk of `key'
-    k *= c1;
-    k = (k << r1) | (k >> (32 - r1));
-    k *= c2;
-
-    // append to hash
-    h ^= k;
-    h = (h << r2) | (h >> (32 - r2));
-    h = h * m + n;
-  }
-
-  k = 0;
-
-  // remainder
-  switch (len & 3) { // `len % 4'
-    case 3:
-      k ^= (tail[2] << 16);
-    case 2:
-      k ^= (tail[1] << 8);
-
-    case 1:
-      k ^= tail[0];
-      k *= c1;
-      k = (k << r1) | (k >> (32 - r1));
-      k *= c2;
-      h ^= k;
-  }
-
-  h ^= (uint32_t)len;
-
-  h ^= (h >> 16);
-  h *= 0x85ebca6b;
-  h ^= (h >> 13);
-  h *= 0xc2b2ae35;
-  h ^= (h >> 16);
-
-  return (size_t)h;
+    return hash;
 }
 
 dictionary_t* new_dictionary(destroy_f destroy,size_t size){
@@ -141,7 +94,7 @@ size_t get_index(dictionary_t* dictionary, const char *key, bool* err) {
           return real_index;
       }
       real_index = (real_index+1)%(dictionary->size);
-  }while (real_index != hash_key % dictionary->size);
+  }while (real_index < dictionary->size);
   return 0;
 }
 
@@ -175,16 +128,28 @@ dictionary_t *dictionary_create(destroy_f destroy) {
     return new_dictionary(destroy,1021);
 };
 
-bool dictionary_put(dictionary_t *dictionary, const char *key, void *value) {
-    if ((float)dictionary_size(dictionary) / (float) dictionary->size >=0.6) {
-     if(!rehash_table(dictionary)) return false;
-    }
-    bool err = true;
-    size_t index = get_index(dictionary,key,&err);
-    if(!err) return insert_existing_key(dictionary,value,index);
-    return insert_bucket (dictionary,key,value,index);
-  }
 
+bool dictionary_put(dictionary_t *dictionary, const char *key, void *value) {
+  size_t size= dictionary->size;
+  uint32_t hs = murmurhash(key, strlen(key),dictionary->seed);
+  size_t index = hs & (size-1); //hash dentro del rango del tamaño de la tabla
+  if(dictionary_contains(dictionary,key)){insert_existing_key(dictionary,value,index); }
+  for (size_t i = index; i < 32; i++) {
+    if (!dictionary->buckets[i].key) { // si está vacío igual lo guardamos en algún vecino (evitar colisiones)
+      size_t j = 1;
+      while ((i + j) < dictionary->size) {
+        if (!dictionary->buckets[i + j].key) { // encontró un vecino vacío
+          index += j;
+          break;
+        }
+        j++;
+      }
+      return insert_bucket(dictionary,key,value,index);
+    }
+    rehash_table(dictionary);
+  }
+  return false;
+}
 void *dictionary_get(dictionary_t *dictionary, const char *key, bool *err) {
   size_t index = get_index(dictionary,key,err);
   if(!(*err)) return dictionary->buckets[index].value;    
