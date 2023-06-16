@@ -92,14 +92,14 @@ class Graph:
         :return: boolean
         """
         return vertex1 in self._graph and vertex2 in self._graph[vertex1]['neighbors']
-
-    def get_vertices (self) -> List[str]:
+        
+    def get_vertices(self) -> List[str]:
         """
-        Retorna la lista de vértices en el grafo.
+        Retorna la lista de vértices en el grafo que comienzan con 'nm'.
         :return: Lista de vértices
         """
-        return list(self._graph.keys())
-    
+        return [vertex for vertex in self._graph.keys() if vertex[:2] == 'nm']
+        
     def get_size(self) -> int:
         """
         Returns the size of the graph, which is the number of vertices
