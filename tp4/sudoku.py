@@ -1,5 +1,4 @@
 def possible(grid, x, y, n):
-    
     """
 
     grid: Tablero del Sudoku
@@ -10,17 +9,14 @@ def possible(grid, x, y, n):
     Returns: True si es posible colocar n en la posicion (x,y) del tablero
 
     """
-
     # Verifica que n no pertenece a la fila x
     for i in range(0,9):
         if grid[x][i] == n:
             return False
-
     # Verifica que n no pertenece a la fila y
     for i in range(0,9):
         if grid[i][y] == n:
             return False
-
     # Verifica que n no pertenece a la submatriz de 3x3 que le corresponde
     xo = (x//3) * 3
     yo = (y//3) * 3
@@ -28,19 +24,16 @@ def possible(grid, x, y, n):
         for j in range(0, 3):
             if grid[xo+i][yo+j] == n:
                 return False
-
     return True
 
 
 def is_full(grid):
-    
     """
 
     grid: Tablero de 9x9      
     Returns: True si el sudoku esta lleno
     
     """
-
     for i in range(9):
         for j in range(9):
             if(grid[i][j] == 0):
@@ -48,7 +41,6 @@ def is_full(grid):
     return True
 
 def solve(grid):
-
     """ Resuelve un sudoku de 9x9.
 
     Args:
@@ -58,7 +50,21 @@ def solve(grid):
         grid: El tablero resuelto.
 
     """
-    pass
+    for i in range(9):
+        for j in range(9):
+            if(grid[i][j] == 0):
+                for n in range (1,10):
+                    if possible (grid,i,j,n):
+                        grid[i][j] = n
+                        solve(grid)
+                        if(is_full(grid)):
+                            return grid
+                        grid[i][j] = 0 
+                return grid
+
+   
+
+
     
 
 grid = [
