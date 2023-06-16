@@ -69,39 +69,11 @@ def dfs_bipartite(graph, vertex, visited, clusters, cluster_id, cluster_graph):
     
     clusters[cluster_id] = cluster_graph
 
-# def calculate_degree_of_separation(cluster, actor1_id, actor2_id):
-#lindo pero ineficiente
-#     visited = set()
-#     queue = deque([(actor1_id, 0)])  # Cola para el BFS
-    
-#     while queue:
-#         current_actor, degree = queue.popleft()    
-#         if current_actor == actor2_id:
-#             return degree  # Se encontró la ruta más corta
-#         if current_actor in visited:
-#             continue
-#         visited.add(current_actor)
-#         neighbors = cluster.get_neighbors(current_actor)
-#         for neighbor in neighbors:
-#             if neighbor not in visited:
-#                 queue.append((neighbor, degree + 1))
-#     return -1  # No se encontró una ruta entre los actores
-
-def second_exercise(clusters):
-    actor1_id, cluster = get_artist(clusters, -1,1234)
-    actor2_id, cluster = get_artist(clusters, -1,6543)
-    degree = calculate_degree_of_separation(cluster, actor1_id, actor2_id)
-    if degree == -1:
-        print("No se encontró una ruta entre los actores.")
-    else:
-        print(f"El grado de separación entre {actor1_id} y {actor2_id} es: {degree}")
-
 def calculate_degree_of_separation(cluster, actor1_id, actor2_id):
     visited_forward = set()
     visited_backward = set()
-    queue_backward = deque([(actor1_id, 0)])  # Cola para el BFS desde Kevin Bacon
-    queue_forward = deque([(actor2_id, 0)])  # Cola para el BFS desde el actor1
-    
+    queue_forward = deque([(actor1_id, 0)])  # Cola para el BFS desde el actor1
+    queue_backward = deque([(actor2_id, 0)])  # Cola para el BFS desde Kevin Bacon
     
     while queue_forward and queue_backward:
         current_actor_forward, degree_forward = queue_forward.popleft()
@@ -128,28 +100,47 @@ def calculate_degree_of_separation(cluster, actor1_id, actor2_id):
                 if neighbor_backward not in visited_backward:
                     queue_backward.append((neighbor_backward, degree_backward + 1))
     
-    return -1  # No se encontró una ruta entre los actores
+    return -1 # No se encontró un camino entre los puntos
+
+def second_exercise(clusters):
+    actor1_id, cluster = get_artist(clusters, -1,1234)
+    actor2_id, cluster = get_artist(clusters, -1,6543)
+    degree = calculate_degree_of_separation(cluster, actor1_id, actor2_id)
+    if degree == -1:
+        print("No se encontró una ruta entre los actores.")
+    else:
+        print(f"El grado de separación entre {actor1_id} y {actor2_id} es: {degree}")
+
+def find_farthest_actor(cluster, start_vertex):
+    visited = set()
+    farthest_distance = 0
+    farthest_actor = None
+
+    def dfs(vertex, distance):
+        nonlocal farthest_distance, farthest_actor
+
+        visited.add(vertex)
+        if distance > farthest_distance:
+            farthest_distance = distance
+            farthest_actor = vertex
+        neighbors = cluster.get_neighbors(vertex)
+        for neighbor in neighbors:
+            if neighbor not in visited:
+                dfs(neighbor, distance + 1)
+
+    dfs(start_vertex, 0)
+
+    return farthest_actor, farthest_distance
 
 def farthest_to_kevin_bacon(clusters, bacon_vertex):
-    farthest_artist = ['nm0000102', 0]
     kevin_cluster = find_cluster(clusters, 'nm0000102')[1]
-    #emprolijar
-    vertices = kevin_cluster.get_vertices()
-    print(f"En el cluster de Kevin hay {kevin_cluster.get_size()} elementos")
-    progress_bar = tqdm(total=len(vertices), desc="Calculating shortest paths", unit="vertex")
-    for vertex in vertices:
-        progress_bar.update(1)
-        if vertex != bacon_vertex:
-            distance = calculate_degree_of_separation(kevin_cluster, bacon_vertex, vertex)
-            if distance > farthest_artist[1]:
-                farthest_artist = [vertex, distance]
-    progress_bar.close()
-    return farthest_artist
+    farthest_actor = find_farthest_actor(kevin_cluster, bacon_vertex)
+    return farthest_actor
 
 def third_exercise(clusters):
-    farthest_artist = farthest_to_kevin_bacon(clusters,'nm0000102')
-    print(f"→ El/la actor/actriz mas lejano/a a Kevin Bacon es {farthest_artist[0]} a una distancia de {farthest_artist[1]}")
-    
+    farthest_artist = farthest_to_kevin_bacon(clusters, 'nm0000102')
+    print(f"→ El/la actor/actriz más lejano/a a Kevin Bacon es {farthest_artist[0]} a una distancia de {farthest_artist[1]}")
+
 
 
 def main():
@@ -159,11 +150,13 @@ def main():
     del actors_by_movie
     del actor_names_by_id
     print("loading process ended succesfully ")
-    clusters = bipartite_clustering(graph)
+    clutering_result=bipartite_clustering(graph)
+    clusters = sort_clusters(clutering_result)
     print("clustering process ended succesfully ")
-    # second_exercise (clusters)
+    second_exercise (clusters)
     #el tercero necesita los clusters desordenados, porque si es una lista no puede buscar un elementos a que 
     #cluster pertenece
+    clusters = clutering_result
     third_exercise(clusters)
 
     
