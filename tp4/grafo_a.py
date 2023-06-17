@@ -193,9 +193,6 @@ def get_diameter (cluster):
 def bfs (visited,graph,queue):
     visited_count = 0
     current_actor, distance = queue.popleft()
-    if distance > farthest_distance:
-        farthest_actor = current_actor
-        farthest_distance = distance
     if current_actor not in visited:
         visited.add(current_actor)
         visited_count += 1
@@ -205,7 +202,7 @@ def bfs (visited,graph,queue):
             if neighbor not in visited:
                 queue.append((neighbor, distance + edge_weight))
 
-    return farthest_actor, farthest_distance, visited_count
+    return  distance,visited_count
 
 
 def find_farthest_actor(graph, start_vertex):
@@ -222,8 +219,8 @@ def find_farthest_actor(graph, start_vertex):
     return longest_path,visited_count
 
 
-def calculate_average_separations(artist_id1,graph):
-    longest_path,visited_count = find_farthest_actor(artist_id1,graph)
+def calculate_average_separations(artist_id,graph):
+    longest_path,visited_count = find_farthest_actor(artist_id,graph)
     average_per_actor = longest_path[1]/ visited_count
     return average_per_actor
    
