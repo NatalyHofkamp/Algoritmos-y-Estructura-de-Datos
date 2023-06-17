@@ -6,6 +6,9 @@ from tqdm import tqdm
 import random
 import pickle
 import heapq
+
+from collections import deque
+
 import time
 
 MOVIE_TITLE_TYPE = "movie"
@@ -181,12 +184,58 @@ def get_diameter (cluster):
         if max_distance > visited_vertices[1]:
             visited_vertices[1] = max_distance
     progress_bar.close()
-    average_time = elapsed_time / visited_vertices
+    average_time = elapsed_time / visited_vertices[0]
     mean = average_time * cluster.get_size()
     return visited_vertices[1],mean
 
 
 
+def bfs (visited,graph,queue):
+    visited_count = 0
+    current_actor, distance = queue.popleft()
+    if distance > farthest_distance:
+        farthest_actor = current_actor
+        farthest_distance = distance
+    if current_actor not in visited:
+        visited.add(current_actor)
+        visited_count += 1
+        neighbors = graph.get_neighbors(current_actor)
+        for neighbor in neighbors:
+            edge_weight = len (graph.get_edge_weight(current_actor, neighbor))
+            if neighbor not in visited:
+                queue.append((neighbor, distance + edge_weight))
+
+    return farthest_actor, farthest_distance, visited_count
+
+
+def find_farthest_actor(graph, start_vertex):
+    visited = set()
+    queue = deque([(start_vertex, 0)]) 
+    longest_path = ([start_vertex], 0)
+    visited_count = 0
+    while queue:
+        farthest_actor, distance, visited_count = bfs(visited,graph,queue)
+        if distance > longest_path[1]:
+            longest_path = ([farthest_actor], distance)
+        elif distance == longest_path[1]:
+            longest_path[0].append(farthest_actor)
+    return longest_path,visited_count
+
+
+def calculate_average_separations(artist_id1,graph):
+    longest_path,visited_count = find_farthest_actor(artist_id1,graph)
+    average_per_actor = longest_path[1]/ visited_count
+    return average_per_actor
+   
+
+def seventh_exercise(graph):
+    print("---------EJERCICIO 7--------")
+    average_actor1 = calculate_average_separations('nm0289856',graph)
+    average_actor2 = calculate_average_separations('nm0000102',graph)
+    average_total= (average_actor2+average_actor1)/2
+    print("→ Promedio de separaciones para Guillermo Francella :", average_actor1)
+    print("→ Promedio de separaciones para Kevin Bacon :", average_actor2)
+    print("→ Promedio de separaciones en general:", average_total)
 
 def sixth_exercise(cluster):
     print ("---------EJERCICIO 6--------")
@@ -235,8 +284,9 @@ def main():
     print("Clustering data ended successfully")
     # first_exercise(amount_cl,sorted_clusters)
     # fourth_exercise(clusters)
-    fifth_exercise(sorted_clusters)
-    sixth_exercise(sorted_clusters[-1][1])
+    # fifth_exercise(sorted_clusters)
+    # sixth_exercise(sorted_clusters[-1][1])
+    seventh_exercise(sorted_clusters[-1][1])
 
 
 if __name__=='__main__':

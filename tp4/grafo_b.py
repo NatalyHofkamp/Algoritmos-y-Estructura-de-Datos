@@ -37,14 +37,14 @@ def load_bipartite_graph(movies_by_id, actors_by_movie, actor_names_by_id) -> Gr
     
     return graph
 
-def bfs (visited,graph,queue):
+def bfs (visited,graph,queue,value):
     current_vertex, distance = queue.popleft()
     if current_vertex not in visited:
         visited.add(current_vertex)
         for neighbor in graph.get_neighbors(current_vertex):
             if neighbor not in visited:
                 if current_vertex[:2] == 'tt':
-                    queue.append((neighbor, distance + 1))
+                    queue.append((neighbor, distance+value))
                 else:
                     queue.append((neighbor, distance))
     return current_vertex,distance
@@ -53,7 +53,7 @@ def calculate_distance(graph, start_vertex, target_vertex):
     visited = set()
     queue = deque([(start_vertex, 0)]) 
     while queue:
-        current_vertex,distance = bfs(visited,graph,queue)
+        current_vertex,distance = bfs(visited,graph,queue,1)
         if current_vertex == target_vertex:
             return distance
     return -1  
@@ -63,7 +63,7 @@ def find_longest_path(graph, start_vertex):
     queue = deque([(start_vertex, 0)]) 
     longest_path = ([start_vertex], 0)
     while queue:
-        current_vertex,distance = bfs(visited,graph,queue)
+        current_vertex,distance = bfs(visited,graph,queue,1)
         if distance > longest_path[1]:
             longest_path = ([current_vertex], distance)
         elif distance == longest_path[1]:
