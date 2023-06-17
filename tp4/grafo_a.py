@@ -190,45 +190,43 @@ def get_diameter (cluster):
 
 
 
-def bfs (visited,graph,queue):
-    visited_count = 0
+def bfs (visited,cluster,queue):
     current_actor, distance = queue.popleft()
     if current_actor not in visited:
         visited.add(current_actor)
-        visited_count += 1
-        neighbors = graph.get_neighbors(current_actor)
+        neighbors = cluster.get_neighbors(current_actor)
         for neighbor in neighbors:
-            edge_weight = len (graph.get_edge_weight(current_actor, neighbor))
+            edge_data = len(cluster.get_edge_data(current_actor, neighbor)) 
             if neighbor not in visited:
-                queue.append((neighbor, distance + edge_weight))
+                queue.append((neighbor, distance + edge_data))
 
-    return  distance,visited_count
+    return  current_actor,distance
 
-
-def find_farthest_actor(graph, start_vertex):
+def find_farthest_actor(start_vertex,cluster):
     visited = set()
     queue = deque([(start_vertex, 0)]) 
     longest_path = ([start_vertex], 0)
     visited_count = 0
     while queue:
-        farthest_actor, distance, visited_count = bfs(visited,graph,queue)
+        current_actor, distance = bfs(visited,cluster,queue)
+        visited_count += 1
         if distance > longest_path[1]:
-            longest_path = ([farthest_actor], distance)
+            longest_path = ([current_actor], distance)
         elif distance == longest_path[1]:
-            longest_path[0].append(farthest_actor)
+            longest_path[0].append(current_actor)
     return longest_path,visited_count
 
 
-def calculate_average_separations(artist_id,graph):
-    longest_path,visited_count = find_farthest_actor(artist_id,graph)
+def calculate_average_separations(artist_id,cluster):
+    longest_path,visited_count = find_farthest_actor(artist_id,cluster)
     average_per_actor = longest_path[1]/ visited_count
     return average_per_actor
    
 
-def seventh_exercise(graph):
+def seventh_exercise(cluster):
     print("---------EJERCICIO 7--------")
-    average_actor1 = calculate_average_separations('nm0289856',graph)
-    average_actor2 = calculate_average_separations('nm0000102',graph)
+    average_actor1 = calculate_average_separations('nm0289856',cluster)
+    average_actor2 = calculate_average_separations('nm0000102',cluster)
     average_total= (average_actor2+average_actor1)/2
     print("→ Promedio de separaciones para Guillermo Francella :", average_actor1)
     print("→ Promedio de separaciones para Kevin Bacon :", average_actor2)
