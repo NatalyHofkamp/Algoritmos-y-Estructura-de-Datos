@@ -66,16 +66,17 @@ class Graph:
         """
         Prints the graph
         """
-        count = 0
+        counter =0
         for vertex, data in self._graph.items():
             print("Vertex:", vertex)
             print("Data:", data['data'])
             print("Neighbors:", data['neighbors'])
             print("")
-            count += 1
-            if count == 10:
-                break
 
+            if counter ==10:
+                break
+            counter +=1
+            
     def vertex_exists(self, vertex: str) -> bool:
         """
         If contains a vertex
@@ -92,7 +93,7 @@ class Graph:
         :return: boolean
         """
         return vertex1 in self._graph and vertex2 in self._graph[vertex1]['neighbors']
-        
+
     def get_vertices(self) -> List[str]:
         """
         Retorna la lista de vértices en el grafo que comienzan con 'nm'.
@@ -105,5 +106,5 @@ class Graph:
         Returns the size of the graph, which is the number of vertices
         :return: The size of the graph
         """
-        return len(self._graph)
+        return len(self.get_vertices())
     
