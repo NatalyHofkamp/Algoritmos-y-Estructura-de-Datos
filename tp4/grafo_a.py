@@ -152,16 +152,15 @@ def dijkstra (artist_id, cluster):
     return distances
     
 def get_cluster_mean(cluster,n):
-    shortest_paths = {}
     vertices = random.sample(cluster.get_vertices(), k=n)
     progress_bar = tqdm(total=len(vertices), desc="Calculating shortest paths", unit="vertex")
     start_time = time.time()
     for vertex in vertices:
-        shortest_paths[vertex] = dijkstra (vertex, cluster) #dijkstra
+        distances = dijkstra (vertex, cluster) #dijkstra
         progress_bar.update(1)
     elapsed_time = time.time() - start_time
     progress_bar.close()
-    average_time = elapsed_time / len(vertices)
+    average_time = elapsed_time / n
     mean = average_time*cluster.get_size()
     return mean
 
@@ -182,15 +181,18 @@ def get_diameter (cluster):
         if max_distance > visited_vertices[1]:
             visited_vertices[1] = max_distance
     progress_bar.close()
-    average_time = elapsed_time / len(visited_vertices)
-    mean = average_time * len(vertices)
+    average_time = elapsed_time / visited_vertices
+    mean = average_time * cluster.get_size()
     return visited_vertices[1],mean
+
+
+
 
 def sixth_exercise(cluster):
     print ("---------EJERCICIO 6--------")
     diameter,mean= get_diameter(cluster)
     print("→En 15 minutos obtenemos un diámetro de =",diameter)
-    print (f"→ Buscar el diámetro, recorriendo todos los vértices llevaría {mean/84600} dias")
+    print (f"→ Buscar el diámetro, recorriendo todos los vértices, llevaría {mean/84600} dias")
 
 
 def first_exercise(amount_cl, clusters):
@@ -211,9 +213,9 @@ def fourth_exercise(clusters):
 
 def fifth_exercise(clusters):
     print ("---------EJERCICIO 5--------")
-    max_ = get_cluster_mean(get_artist(clusters,-1,147)[1],2)
+    max_ = get_cluster_mean(get_artist(clusters,-1,147)[1],100)
     intermediate_ = intermediate_mean(clusters, max_)
-    min_ = get_cluster_mean(get_artist(clusters,-2,987)[1],2) *len(clusters)
+    min_ = get_cluster_mean(get_artist(clusters,-2,987)[1],20) *len(clusters)
     print("Aproximación de tiempo máxima →", (max_)/ 86400, "dias")
     print("Aproximación de tiempo intermedia →", intermediate_ / 86400, "dias")
     print("Aproximación de tiempo mínima →", min_ / 86400, "dias")
@@ -233,7 +235,7 @@ def main():
     print("Clustering data ended successfully")
     # first_exercise(amount_cl,sorted_clusters)
     # fourth_exercise(clusters)
-    # fifth_exercise(sorted_clusters)
+    fifth_exercise(sorted_clusters)
     sixth_exercise(sorted_clusters[-1][1])
 
 
