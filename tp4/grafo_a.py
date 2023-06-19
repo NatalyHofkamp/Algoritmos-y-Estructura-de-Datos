@@ -131,8 +131,20 @@ def generate_clusters(clusters):
     return [cluster_min1,cluster_min2,cluster_min3]
 
 
+def average_distances(cluster):
+    #distances es una lista con diccionarios para cada vertice recorrido
+    distances,mean_time = get_distances_average_time(cluster,5)[0]
+    avg_dist = []
+    for artist in distances :
+        sum_distances = sum(artist.values())
+        total_vertices = len(artist)
+        avg_dist.append(sum_distances / total_vertices)
+    return (sum(avg_dist)/len(avg_dist)), mean_time
+
+
 def dijkstra (artist_id, cluster):
     #diccionario con todas las ditancias minimas de un artista al resto del cluster
+    start_time = time.time()
     distances = {artist: float('inf') for artist in cluster.get_vertices()}
     distances[artist_id] = 0
     queue = [(0, artist_id)]
@@ -145,24 +157,8 @@ def dijkstra (artist_id, cluster):
             if distance < distances[neighbor]:
                 distances[neighbor] = distance
                 heapq.heappush(queue, (distance, neighbor))
-    return distances
-
-
-def get_distances_average_time(cluster,n):
-    """
-    Given a cluster and an amount of vertices to visit,
-    this function returns a list with the vertices visited
-    and their minimums  paths , in addition to the average
-    time it would take do it for all vertices.
-    """
-    vertices = random.sample(cluster.get_vertices(), k=n)
-    start_time = time.time()
-    distances = []
-    for vertex in vertices:
-        distances.append(dijkstra (vertex, cluster))
-    average_time =(time.time() - start_time) / n
-    mean_time = average_time * cluster.get_size()
-    return distances,mean_time
+    elapsed_time = time.time() - start_time
+    return distances,elapsed_time
 
 
 def get_diameter (cluster):
@@ -175,12 +171,9 @@ def get_diameter (cluster):
     visited_vertices = [0,0]
     start_time = time.time()
     progress_bar = tqdm(total=len(vertices), desc="Calculating shortest paths", unit="vertex")
-    for vertex in vertices:
-        visited_vertices[0] += 1
-        elapsed_time = time.time()- start_time
-        if elapsed_time >= 900:
-            break
-        distances = dijkstra(vertex,cluster)
+    elapsed_time = time.time()- start_time
+    while (elapsed_time < 900):
+        dijkstra(vertex,cluster)
         max_distance = max(distances.values())
         progress_bar.update(1)
         if max_distance > visited_vertices[1]:
@@ -190,16 +183,13 @@ def get_diameter (cluster):
     mean = average_time * cluster.get_size()
     return visited_vertices[1],mean
 
-def average_distances(cluster):
-    #distances es una lista con diccionarios para cada vertice recorrido
-    distances,mean_time = get_distances_average_time(cluster,5)[0]
-    avg_dist = []
-    for artist in distances :
-        sum_distances = sum(artist.values())
-        total_vertices = len(artist)
-        avg_dist.append(sum_distances / total_vertices)
-    return (sum(avg_dist)/len(avg_dist)), mean_time
-
+def get_total_time(cluster,n):
+    some_vertices = random.sample(cluster.get_vertices(), k=n)
+    elapsed_time = 0
+    for vertex in some_vertices:
+        elapsed_time += (dijkstra(vertex,cluster)[1])
+    return elapsed_time/n
+    
 
 def seventh_exercise(cluster):
     print("---------EJERCICIO 7--------")
@@ -213,26 +203,15 @@ def sixth_exercise(cluster):
     print("→En 15 minutos obtenemos un diámetro de =",diameter)
     print (f"→ Buscar el diámetro, recorriendo todos los vértices, llevaría {mean/84600} dias")
 
-def intermediate_mean (clusters,max_mean):
-    some_clusters = generate_clusters(clusters)
-    mean = 0 
-    for cluster in some_clusters:
-        mean += get_distances_average_time(cluster,2)
-    return (((mean / len(some_clusters)) * (len(clusters) - 1)) + max_mean)/2
-
-
 def fifth_exercise(clusters):
     print ("---------EJERCICIO 5--------")
-    #tomo el promedio que llevaría solo al cluster mas grande 
-    #porque es donde estan la mayoria de los elementos
-    # y tiene sentido que la mediana esté ahi
-    max_ = get_distances_average_time(clusters[-1][1],100) [1]
+    max_ = get_total_time(clusters[-1][1],100) [1]
     print("Aproximación de tiempo máxima →", (max_)/ 86400, "dias")
 
 def fourth_exercise(actor_names_by_id,clusters,artist_id):
     print ("---------EJERCICIO 4--------")
     cluster_id, cluster = find_cluster(clusters, artist_id)
-    distances = dijkstra (artist_id, cluster)
+    distances = dijkstra (artist_id, cluster)[0]
     print(f"Camino mínimo desde {actor_names_by_id[artist_id]} a todos los demás artistas del cluster {cluster_id}:")
     for artist, distance in distances.items():
         print(f"{actor_names_by_id[artist]}: {distance} colaboraciones")
