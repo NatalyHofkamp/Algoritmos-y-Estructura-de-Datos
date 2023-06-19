@@ -99,7 +99,7 @@ class Graph:
         Retorna la lista de vértices en el grafo que comienzan con 'nm'.
         :return: Lista de vértices
         """
-        return [vertex for vertex in self._graph.keys() if vertex[:2] == 'nm']
+        return [vertex for vertex in self._graph.keys()]
         
     def get_size(self) -> int:
         """

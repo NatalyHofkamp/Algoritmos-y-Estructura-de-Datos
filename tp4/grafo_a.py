@@ -186,12 +186,12 @@ def sixth_exercise(cluster):
     print ("---------EJERCICIO 6--------")
     diameter,mean= get_diameter(cluster)
     print("→En 15 minutos obtenemos un diámetro de =",diameter)
-    print (f"→ Buscar el diámetro, recorriendo todos los vértices, llevaría {mean/84600} horas")
+    print (f"→ Buscar el diámetro, recorriendo todos los vértices, llevaría {mean/84600} dias")
 
 def fifth_exercise(clusters):
     print ("---------EJERCICIO 5--------")
     max_ = get_distances(clusters[-1][1],10)[0]
-    print("Aproximación de tiempo máxima →", (max_)/ 84600, "horas")
+    print("Aproximación de tiempo máxima →", (max_)/ 84600, "dias")
 
 def fourth_exercise(actor_names_by_id,clusters,artist_id):
     print ("---------EJERCICIO 4--------")
@@ -217,7 +217,7 @@ def main():
     amount_cl, clusters = clustering (graph)
     sorted_clusters = sort_clusters(clusters)
     print("Clustering data ended successfully")
-    artist_id = get_artist(sort_clusters(clusters)[-3])
+    artist_id = get_artist(sort_clusters(clusters)[-3][1])
     first_exercise(amount_cl,sorted_clusters)
     fourth_exercise(actor_names_by_id,clusters,artist_id)
     fifth_exercise(sorted_clusters)

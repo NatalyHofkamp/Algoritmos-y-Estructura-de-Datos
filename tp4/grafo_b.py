@@ -1,5 +1,7 @@
 from graph import Graph
 from grafo_a import read_data
+import numpy as np
+import random
 from collections import deque
 
 MOVIE_TITLE_TYPE = "movie"
@@ -61,7 +63,7 @@ def find_longest_path(graph, start_vertex):
             longest_path[0].append(current_vertex)
     return longest_path
     
-def second_exercise(graph):
+def second_exercise(graph,actor_names_by_id):
     print ("---------EJERCICIO 2--------")
     actor1_id = 'nm0289856' 
     actor2_id = 'nm0000102'
@@ -69,24 +71,55 @@ def second_exercise(graph):
     if degree == -1:
         print("No se encontró una ruta entre los actores.")
     else:
-        print(f"El grado de separación entre {actor1_id} y {actor2_id} es: {degree}")
+        print(f"El grado de separación entre {actor_names_by_id[actor1_id]} y {actor_names_by_id[actor2_id]} es: {degree}")
 
-def third_exercise(graphs):
+def third_exercise(graph,actor_names_by_id):
     print ("---------EJERCICIO 3--------")
-    farthest_artist = find_longest_path(graphs,'nm0000102')
-    print(f"→ El/la actor/actriz más lejano/a a Kevin Bacon es {farthest_artist[0]} a una distancia de {farthest_artist[1]}")
-   
+    farthest_artist = find_longest_path(graph,'nm0000102')
+    print(f"→ El/la actor/actriz más lejano/a a Kevin Bacon es {actor_names_by_id[farthest_artist[0]]} a una distancia de {farthest_artist[1]}")
+
+
+def random_walks(graph, num_walks=100, walk_length=10):
+    vertices = graph.get_vertices()
+    centralities = {'actors': {actor: 0 for actor in vertices if actor[:2] =='nm'},
+                    'movies': {movie: 0 for movie in vertices if movie[:2] =='tt'}}
+
+    for _ in range(num_walks):
+        for _ in range(walk_length):
+            current_node = random.choice(vertices)
+            neighbors = graph.get_neighbors(current_node)
+            current_node = random.choice(neighbors)
+            if current_node.startswith('nm'):
+                centralities['actors'][current_node] += 1
+            else:
+                centralities['movies'][current_node] += 1
+
+    # Normalizing centralities by the number of walks
+    total_walks = num_walks * walk_length
+    for node_type in centralities:
+        for node in centralities[node_type]:
+            centralities[node_type][node] /= total_walks
+
+    return centralities
+
+def extra_exercise (graph,actor_names_by_id,movies_by_id):
+    centralities = random_walks(graph,1000,100)
+
+    top_actor = max ( centralities['actors'].value())
+    top_movie= max (centralities['movies'].value())
+
+    print(f"El actor con mayor centralidad es {actor_names_by_id[top_actor]}")
+    print(f"La película con mayor centralidad es {movies_by_id[top_movie]}")
 
 def main():
     movies_by_id, actors_by_movie, actor_names_by_id = read_data(MOVIES_DATA_PATH, ACTORS_DATA_PATH, ACTORS_NAMES_PATH)
     graph = load_bipartite_graph(movies_by_id, actors_by_movie, actor_names_by_id)
-    del movies_by_id
     del actors_by_movie
-    del actor_names_by_id
     print("loading process ended succesfully ")
     
     second_exercise (graph)
-    third_exercise(graph)
+    third_exercise(graph,actor_names_by_id)
+    extra_exercise(graph,actor_names_by_id,movies_by_id)
 
     
 if __name__ == '__main__':
