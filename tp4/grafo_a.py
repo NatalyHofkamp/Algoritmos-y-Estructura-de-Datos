@@ -196,7 +196,7 @@ def sixth_exercise(cluster):
 
 def fifth_exercise(clusters):
     print ("---------EJERCICIO 5--------")
-    max_ = get_total_time(clusters[-1][1],100) [1]
+    max_ = get_total_time(clusters[-1][1],10)
     print("Aproximación de tiempo máxima →", (max_)/ 86400, "dias")
 
 def fourth_exercise(actor_names_by_id,clusters,artist_id):
