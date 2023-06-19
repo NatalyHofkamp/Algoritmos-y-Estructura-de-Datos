@@ -94,9 +94,9 @@ def random_walks(graph, num_walks=100, walk_length=10):
             if neighbors : 
                 current_node = random.choice(neighbors)
             if current_node.startswith('nm'):
-                centralities['actors'][current_node] += 1
+                centralities['actors'][current_node] = len(neighbors)
             else:
-                centralities['movies'][current_node] += 1
+                centralities['movies'][current_node] = len(neighbors)
 
 
     return centralities
