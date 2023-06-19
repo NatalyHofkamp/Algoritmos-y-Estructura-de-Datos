@@ -75,8 +75,11 @@ def second_exercise(graph,actor_names_by_id):
 
 def third_exercise(graph,actor_names_by_id):
     print ("---------EJERCICIO 3--------")
-    farthest_artist = find_longest_path(graph,'nm0000102')
-    print(f"→ El/la actor/actriz más lejano/a a Kevin Bacon es {actor_names_by_id[farthest_artist[0]]} a una distancia de {farthest_artist[1]}")
+    farthest_artist,distance= find_longest_path(graph,'nm0000102')
+    print("Los actores y actrices mas lejanos a Kevin Bacon son:")
+    for actor in farthest_artist:
+        print(f"→{actor_names_by_id[actor]}")
+    print(f"a una distancia de {distance}")
 
 
 def random_walks(graph, num_walks=100, walk_length=10):
@@ -117,7 +120,7 @@ def main():
     del actors_by_movie
     print("loading process ended succesfully ")
     
-    second_exercise (graph)
+    second_exercise (graph,actor_names_by_id)
     third_exercise(graph,actor_names_by_id)
     extra_exercise(graph,actor_names_by_id,movies_by_id)
 
