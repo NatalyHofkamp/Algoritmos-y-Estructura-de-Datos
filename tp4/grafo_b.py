@@ -78,7 +78,7 @@ def third_exercise(graph,actor_names_by_id):
     farthest_artist,distance= find_longest_path(graph,'nm0000102')
     print("Los actores y actrices mas lejanos a Kevin Bacon son:")
     for actor in farthest_artist:
-        print(f"→{actor_names_by_id[actor]}")
+        print(f"→ {actor_names_by_id[actor]}")
     print(f"a una distancia de {distance}")
 
 
@@ -91,25 +91,20 @@ def random_walks(graph, num_walks=100, walk_length=10):
         for _ in range(walk_length):
             current_node = random.choice(vertices)
             neighbors = graph.get_neighbors(current_node)
-            current_node = random.choice(neighbors)
+            if neighbors : 
+                current_node = random.choice(neighbors)
             if current_node.startswith('nm'):
                 centralities['actors'][current_node] += 1
             else:
                 centralities['movies'][current_node] += 1
 
-    # Normalizing centralities by the number of walks
-    total_walks = num_walks * walk_length
-    for node_type in centralities:
-        for node in centralities[node_type]:
-            centralities[node_type][node] /= total_walks
 
     return centralities
 
 def extra_exercise (graph,actor_names_by_id,movies_by_id):
-    centralities = random_walks(graph,1000,100)
-
-    top_actor = max ( centralities['actors'].value())
-    top_movie= max (centralities['movies'].value())
+    centralities = random_walks(graph, 10000, 1000)
+    top_actor = max(centralities['actors'], key=centralities['actors'].get)
+    top_movie = max(centralities['movies'], key=centralities['movies'].get)
 
     print(f"El actor con mayor centralidad es {actor_names_by_id[top_actor]}")
     print(f"La película con mayor centralidad es {movies_by_id[top_movie]}")
@@ -120,8 +115,8 @@ def main():
     del actors_by_movie
     print("loading process ended succesfully ")
     
-    second_exercise (graph,actor_names_by_id)
-    third_exercise(graph,actor_names_by_id)
+    # second_exercise (graph,actor_names_by_id)
+    # third_exercise(graph,actor_names_by_id)
     extra_exercise(graph,actor_names_by_id,movies_by_id)
 
     
