@@ -1,14 +1,5 @@
 from graph import Graph
-import csv
-from itertools import combinations
-import os
-from tqdm import tqdm 
-import random
-import pickle
-import heapq
 from grafo_a import read_data
-import time
-from queue import Queue
 from collections import deque
 
 MOVIE_TITLE_TYPE = "movie"

@@ -81,7 +81,7 @@ def load_graph(movies_by_id, actors_by_movie, actor_names_by_id) -> Graph:
             graph.add_edge(vertex1=actor1, vertex2=actor2,
                            data={movie_title} | existing_data)
     return graph
-
+ 
 def sort_clusters(clusters):
     return sorted(clusters.items(), key=lambda x: x[1].get_size())
 
@@ -126,8 +126,7 @@ def find_cluster(clusters, artist_id):
         if value.vertex_exists(artist_id):
             return key, value
     raise ValueError("El artista no se encuentra en ningún clúster")
-def get_artist(clusters,num,seed):
-    random.seed(seed) 
+def get_artist(clusters,num):
     random_cluster = clusters[num][1]#elijo uno de los ultimos clusters pq tienen mas elementos
     random_vertex = random.choice(random_cluster.get_vertices())
     return random_vertex,clusters[num][1]
@@ -138,7 +137,11 @@ def generate_clusters(clusters):
     cluster_min3 = get_artist(clusters,2,987)[1]
     return [cluster_min1,cluster_min2,cluster_min3]
 
+def get_cluster_mean(cluster,n):
+    return get_distances_average_time(cluster,5) [1]
+
 def dijkstra (artist_id, cluster):
+    #diccionario con todas las ditancias minimas de un artista al resto del cluster
     distances = {artist: float('inf') for artist in cluster.get_vertices()}
     distances[artist_id] = 0
     queue = [(0, artist_id)]
@@ -147,28 +150,36 @@ def dijkstra (artist_id, cluster):
         if current_distance > distances[current_artist]:
             continue
         for neighbor in cluster.get_neighbors(current_artist):
-            edge_data = len(cluster.get_edge_data(current_artist, neighbor))
-            distance = current_distance + edge_data
+            distance = current_distance + len(cluster.get_edge_data(current_artist, neighbor))
             if distance < distances[neighbor]:
                 distances[neighbor] = distance
                 heapq.heappush(queue, (distance, neighbor))
     return distances
-    
-def get_cluster_mean(cluster,n):
+
+
+def get_distances_average_time(cluster,n):
+    """
+    Given a cluster and an amount of vertices to visit,
+    this function returns a list with the vertices visited
+    and their minimums  paths , in addition to the average
+    time it would take do it for all vertices.
+    """
     vertices = random.sample(cluster.get_vertices(), k=n)
-    progress_bar = tqdm(total=len(vertices), desc="Calculating shortest paths", unit="vertex")
     start_time = time.time()
+    distances = []
     for vertex in vertices:
-        distances = dijkstra (vertex, cluster) #dijkstra
-        progress_bar.update(1)
-    elapsed_time = time.time() - start_time
-    progress_bar.close()
-    average_time = elapsed_time / n
-    mean = average_time*cluster.get_size()
-    return mean
+        distances.append(dijkstra (vertex, cluster))
+    average_time =(time.time() - start_time) / n
+    mean_time = average_time * cluster.get_size()
+    return distances,mean_time
 
 
 def get_diameter (cluster):
+    """ Given a cluster, the function visits all vertices
+     of the graph and finds all its minimum paths and the 
+     maximum of them for each vertex. Then, it returns the
+     diameter of the graph and the time it would take to
+     go through all the vertices to do this calculation."""
     vertices = cluster.get_vertices()
     visited_vertices = [0,0]
     start_time = time.time()
@@ -188,71 +199,28 @@ def get_diameter (cluster):
     mean = average_time * cluster.get_size()
     return visited_vertices[1],mean
 
+def average_distances(cluster):
+    #distances es una lista con diccionarios para cada vertice recorrido
+    distances,mean_time = get_distances_average_time(cluster,5)[0]
+    avg_dist = []
+    for artist in distances :
+        sum_distances = sum(artist.values())
+        total_vertices = len(artist)
+        avg_dist.append(sum_distances / total_vertices)
+    return (sum(avg_dist)/len(avg_dist)), mean_time
 
-
-def bfs (visited,cluster,queue):
-    current_actor, distance = queue.popleft()
-    if current_actor not in visited:
-        visited.add(current_actor)
-        neighbors = cluster.get_neighbors(current_actor)
-        for neighbor in neighbors:
-            edge_data = len(cluster.get_edge_data(current_actor, neighbor)) 
-            if neighbor not in visited:
-                queue.append((neighbor, distance + edge_data))
-
-    return  current_actor,distance
-
-def find_farthest_actor(start_vertex,cluster):
-    visited = set()
-    queue = deque([(start_vertex, 0)]) 
-    longest_path = ([start_vertex], 0)
-    visited_count = 0
-    while queue:
-        current_actor, distance = bfs(visited,cluster,queue)
-        visited_count += 1
-        if distance > longest_path[1]:
-            longest_path = ([current_actor], distance)
-        elif distance == longest_path[1]:
-            longest_path[0].append(current_actor)
-    return longest_path,visited_count
-
-
-def calculate_average_separations(artist_id,cluster):
-    longest_path,visited_count = find_farthest_actor(artist_id,cluster)
-    average_per_actor = longest_path[1]/ visited_count
-    return average_per_actor
-   
 
 def seventh_exercise(cluster):
     print("---------EJERCICIO 7--------")
-    average_actor1 = calculate_average_separations('nm0289856',cluster)
-    average_actor2 = calculate_average_separations('nm0000102',cluster)
-    average_total= (average_actor2+average_actor1)/2
-    print("→ Promedio de separaciones para Guillermo Francella :", average_actor1)
-    print("→ Promedio de separaciones para Kevin Bacon :", average_actor2)
-    print("→ Promedio de separaciones en general:", average_total)
+    average_distance,mean_time = average_distances(cluster)
+    print("→ Promedio de separaciones para todos los actores en general:", average_distance)
+    print("→ Calcular la distancia promedio para todo el cluster llevaría:", mean_time/84600, " dias.")
 
 def sixth_exercise(cluster):
     print ("---------EJERCICIO 6--------")
     diameter,mean= get_diameter(cluster)
     print("→En 15 minutos obtenemos un diámetro de =",diameter)
     print (f"→ Buscar el diámetro, recorriendo todos los vértices, llevaría {mean/84600} dias")
-
-
-def first_exercise(amount_cl, clusters):
-    print ("---------EJERCICIO 1--------")
-    print("→ Cantidad de componentes conexas:", amount_cl)
-    print(f"→ Segunda componente conexa más grande: {clusters[-2][0]}, con {clusters[-2][1].get_size()} elementos.")
-    print(f"→ Componente conexa más pequeña: {clusters[0][0]}, con {clusters[0][1].get_size()} elementos.")
-
-def fourth_exercise(clusters):
-    print ("---------EJERCICIO 4--------")
-    artist_id,cluster_min = get_artist(sort_clusters(clusters),-3,1235)
-    cluster_id, cluster = find_cluster(clusters, artist_id)
-    distances = dijkstra (artist_id, cluster)
-    print(f"Camino mínimo desde {artist_id} a todos los demás artistas del cluster {cluster_id}:")
-    for artist, distance in distances.items():
-        print(f"{artist}: {distance} colaboraciones")
 
 
 def fifth_exercise(clusters):
@@ -265,6 +233,19 @@ def fifth_exercise(clusters):
     print("Aproximación de tiempo mínima →", min_ / 86400, "dias")
     print("Promedio de las aproximaciones →", (max_+ min_ + intermediate_) / (86400*3), "dias")
 
+def fourth_exercise(actor_names_by_id,clusters,artist_id):
+    print ("---------EJERCICIO 4--------")
+    cluster_id, cluster = find_cluster(clusters, artist_id)
+    distances = dijkstra (artist_id, cluster)
+    print(f"Camino mínimo desde {actor_names_by_id[artist_id]} a todos los demás artistas del cluster {cluster_id}:")
+    for artist, distance in distances.items():
+        print(f"{actor_names_by_id[artist]}: {distance} colaboraciones")
+
+def first_exercise(amount_cl, clusters):
+    print ("---------EJERCICIO 1--------")
+    print("→ Cantidad de componentes conexas:", amount_cl)
+    print(f"→ Segunda componente conexa más grande: {clusters[-2][0]}, con {clusters[-2][1].get_size()} elementos.")
+    print(f"→ Componente conexa más pequeña: {clusters[0][0]}, con {clusters[0][1].get_size()} elementos.")
 
 
 def main():
@@ -277,11 +258,12 @@ def main():
     amount_cl, clusters = find_connected_clusters(graph)
     sorted_clusters = sort_clusters(clusters)
     print("Clustering data ended successfully")
+    artist_id = get_artist(sort_clusters(clusters),-3)
     # first_exercise(amount_cl,sorted_clusters)
-    # fourth_exercise(clusters)
+    fourth_exercise(actor_names_by_id,clusters,artist_id)
     # fifth_exercise(sorted_clusters)
     # sixth_exercise(sorted_clusters[-1][1])
-    seventh_exercise(sorted_clusters[-1][1])
+    # seventh_exercise(sorted_clusters[-1][1])
 
 
 if __name__=='__main__':
