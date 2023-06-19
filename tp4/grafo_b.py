@@ -91,20 +91,19 @@ def random_walks(graph, num_walks=100, walk_length=10):
         for _ in range(walk_length):
             current_node = random.choice(vertices)
             neighbors = graph.get_neighbors(current_node)
-            if neighbors : 
-                current_node = random.choice(neighbors)
-            if current_node.startswith('nm'):
-                centralities['actors'][current_node] = len(neighbors)
+            if current_node[:2] =='nm':
+                centralities['actors'][current_node] += 1
             else:
-                centralities['movies'][current_node] = len(neighbors)
+                centralities['movies'][current_node] +=1
 
 
     return centralities
 
 def extra_exercise (graph,actor_names_by_id,movies_by_id):
-    centralities = random_walks(graph, 10000, 1000)
+    centralities = random_walks(graph, 100000, 1000)
     top_actor = max(centralities['actors'], key=centralities['actors'].get)
     top_movie = max(centralities['movies'], key=centralities['movies'].get)
+    
 
     print(f"El actor con mayor centralidad es {actor_names_by_id[top_actor]}")
     print(f"La película con mayor centralidad es {movies_by_id[top_movie]}")
