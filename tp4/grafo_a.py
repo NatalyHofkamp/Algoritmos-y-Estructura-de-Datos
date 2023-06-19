@@ -85,21 +85,7 @@ def load_graph(movies_by_id, actors_by_movie, actor_names_by_id) -> Graph:
 def sort_clusters(clusters):
     return sorted(clusters.items(), key=lambda x: x[1].get_size())
 
-def dfs(graph, vertex, visited, clusters, cluster_id, cluster_graph):
-    queue = [vertex]
-    while queue:
-        vertex = queue.pop()
-        visited.add(vertex)
-        cluster_graph.add_vertex(vertex)
-        clusters[cluster_id] = cluster_graph
-        for neighbor in graph.get_neighbors(vertex):
-            if neighbor not in visited:
-                queue.append(neighbor)
-                cluster_graph.add_vertex(neighbor) 
-                edge_data = graph.get_edge_data(vertex, neighbor)  # Obtener los datos de la arista del grafo original
-                cluster_graph.add_edge(vertex, neighbor, edge_data)  # Agregar la arista al grafo del clustere con los datos correspondientes # Agregar la arista al grafo del clúster
-
-def find_connected_clusters(graph):
+def clustering (graph):
     print("Clustering data in process...")
     visited = set()
     clusters = {}
@@ -114,36 +100,51 @@ def find_connected_clusters(graph):
     
     return cluster_id, clusters
 
+def dfs(graph, vertex, visited, clusters, cluster_id, cluster_graph):
+    queue = [vertex]
+    while queue:
+        vertex = queue.pop()
+        visited.add(vertex)
+        cluster_graph.add_vertex(vertex)
+        clusters[cluster_id] = cluster_graph
+        for neighbor in graph.get_neighbors(vertex):
+            if neighbor not in visited:
+                queue.append(neighbor)
+                cluster_graph.add_vertex(neighbor) 
+                edge_data = graph.get_edge_data(vertex, neighbor)  # Obtener los datos de la arista del grafo original
+                cluster_graph.add_edge(vertex, neighbor, edge_data)  # Agregar la arista al grafo del clustere con los datos correspondientes # Agregar la arista al grafo del clúster
+
+
 def find_cluster(clusters, artist_id):
     for key, value in clusters.items():
         if value.vertex_exists(artist_id):
             return key, value
     raise ValueError("El artista no se encuentra en ningún clúster")
-def get_artist(clusters,num):
-    random_cluster = clusters[num][1]#elijo uno de los ultimos clusters pq tienen mas elementos
-    random_vertex = random.choice(random_cluster.get_vertices())
-    return random_vertex,clusters[num][1]
 
-def generate_clusters(clusters):
-    cluster_min1 = get_artist(clusters,-2,987)[1]
-    cluster_min2 = get_artist(clusters,31500,987)[1]
-    cluster_min3 = get_artist(clusters,2,987)[1]
-    return [cluster_min1,cluster_min2,cluster_min3]
+def get_artist(cluster):
+    return random.choice(cluster.get_vertices())
 
+def get_distances(cluster,n):
+    some_vertices = random.sample(cluster.get_vertices(), k=n)
+    elapsed_time = 0
+    distances = []
+    for vertex in some_vertices:
+        distance,time = dijkstra(vertex,cluster)
+        distances.append(distance)
+        elapsed_time += time
+    mean_time =(elapsed_time/n) * cluster.get_size()
+    return mean_time,distances
+    
 
 def average_distances(cluster):
-    #distances es una lista con diccionarios para cada vertice recorrido
-    distances,mean_time = get_distances_average_time(cluster,5)[0]
+    mean_time,distances = get_distances(cluster,5)
     avg_dist = []
     for artist in distances :
-        sum_distances = sum(artist.values())
-        total_vertices = len(artist)
-        avg_dist.append(sum_distances / total_vertices)
+        avg_dist.append(sum(artist.values()) / len(artist))
     return (sum(avg_dist)/len(avg_dist)), mean_time
 
 
 def dijkstra (artist_id, cluster):
-    #diccionario con todas las ditancias minimas de un artista al resto del cluster
     start_time = time.time()
     distances = {artist: float('inf') for artist in cluster.get_vertices()}
     distances[artist_id] = 0
@@ -163,7 +164,7 @@ def dijkstra (artist_id, cluster):
 
 def get_diameter (cluster):
     vertices = cluster.get_vertices()
-    diameter,i, elapsed_time = 0
+    diameter,i, elapsed_time = 0,0,0
     while (elapsed_time < 900):
         distances,time = dijkstra(vertices[i],cluster)
         max_distance = max(distances.values())
@@ -174,13 +175,6 @@ def get_diameter (cluster):
     average_time = elapsed_time /i
     return diameter,average_time * cluster.get_size()
 
-def get_total_time(cluster,n):
-    some_vertices = random.sample(cluster.get_vertices(), k=n)
-    elapsed_time = 0
-    for vertex in some_vertices:
-        elapsed_time += (dijkstra(vertex,cluster)[1])
-    return elapsed_time/n
-    
 
 def seventh_exercise(cluster):
     print("---------EJERCICIO 7--------")
@@ -192,12 +186,12 @@ def sixth_exercise(cluster):
     print ("---------EJERCICIO 6--------")
     diameter,mean= get_diameter(cluster)
     print("→En 15 minutos obtenemos un diámetro de =",diameter)
-    print (f"→ Buscar el diámetro, recorriendo todos los vértices, llevaría {mean/84600} dias")
+    print (f"→ Buscar el diámetro, recorriendo todos los vértices, llevaría {mean/84600} horas")
 
 def fifth_exercise(clusters):
     print ("---------EJERCICIO 5--------")
-    max_ = get_total_time(clusters[-1][1],10)
-    print("Aproximación de tiempo máxima →", (max_)/ 86400, "dias")
+    max_ = get_distances(clusters[-1][1],10)[0]
+    print("Aproximación de tiempo máxima →", (max_)/ 84600, "horas")
 
 def fourth_exercise(actor_names_by_id,clusters,artist_id):
     print ("---------EJERCICIO 4--------")
@@ -220,15 +214,15 @@ def main():
     del movies_by_id
     del actors_by_movie
     print("Loading data ended successfully")
-    amount_cl, clusters = find_connected_clusters(graph)
+    amount_cl, clusters = clustering (graph)
     sorted_clusters = sort_clusters(clusters)
     print("Clustering data ended successfully")
-    artist_id = get_artist(sort_clusters(clusters),-3)[0]
-    # first_exercise(amount_cl,sorted_clusters)
+    artist_id = get_artist(sort_clusters(clusters)[-3])
+    first_exercise(amount_cl,sorted_clusters)
     fourth_exercise(actor_names_by_id,clusters,artist_id)
-    # fifth_exercise(sorted_clusters)
-    # sixth_exercise(sorted_clusters[-1][1])
-    # seventh_exercise(sorted_clusters[-1][1])
+    fifth_exercise(sorted_clusters)
+    sixth_exercise(sorted_clusters[-1][1])
+    seventh_exercise(sorted_clusters[-1][1])
 
 
 if __name__=='__main__':
