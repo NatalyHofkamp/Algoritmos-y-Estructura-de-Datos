@@ -99,13 +99,6 @@ def dfs(graph, vertex, visited, clusters, cluster_id, cluster_graph):
                 edge_data = graph.get_edge_data(vertex, neighbor)  # Obtener los datos de la arista del grafo original
                 cluster_graph.add_edge(vertex, neighbor, edge_data)  # Agregar la arista al grafo del clustere con los datos correspondientes # Agregar la arista al grafo del clúster
 
-def intermediate_mean (clusters,max_mean):
-    some_clusters = generate_clusters(clusters)
-    mean = 0 
-    for cluster in some_clusters:
-        mean += get_cluster_mean(cluster,2)
-    return (((mean / len(some_clusters)) * (len(clusters) - 1)) + max_mean)/2
-
 def find_connected_clusters(graph):
     print("Clustering data in process...")
     visited = set()
@@ -137,8 +130,6 @@ def generate_clusters(clusters):
     cluster_min3 = get_artist(clusters,2,987)[1]
     return [cluster_min1,cluster_min2,cluster_min3]
 
-def get_cluster_mean(cluster,n):
-    return get_distances_average_time(cluster,5) [1]
 
 def dijkstra (artist_id, cluster):
     #diccionario con todas las ditancias minimas de un artista al resto del cluster
@@ -222,16 +213,21 @@ def sixth_exercise(cluster):
     print("→En 15 minutos obtenemos un diámetro de =",diameter)
     print (f"→ Buscar el diámetro, recorriendo todos los vértices, llevaría {mean/84600} dias")
 
+def intermediate_mean (clusters,max_mean):
+    some_clusters = generate_clusters(clusters)
+    mean = 0 
+    for cluster in some_clusters:
+        mean += get_distances_average_time(cluster,2)
+    return (((mean / len(some_clusters)) * (len(clusters) - 1)) + max_mean)/2
+
 
 def fifth_exercise(clusters):
     print ("---------EJERCICIO 5--------")
-    max_ = get_cluster_mean(get_artist(clusters,-1,147)[1],100)
-    intermediate_ = intermediate_mean(clusters, max_)
-    min_ = get_cluster_mean(get_artist(clusters,-2,987)[1],20) *len(clusters)
+    #tomo el promedio que llevaría solo al cluster mas grande 
+    #porque es donde estan la mayoria de los elementos
+    # y tiene sentido que la mediana esté ahi
+    max_ = get_distances_average_time(clusters[-1][1],100) [1]
     print("Aproximación de tiempo máxima →", (max_)/ 86400, "dias")
-    print("Aproximación de tiempo intermedia →", intermediate_ / 86400, "dias")
-    print("Aproximación de tiempo mínima →", min_ / 86400, "dias")
-    print("Promedio de las aproximaciones →", (max_+ min_ + intermediate_) / (86400*3), "dias")
 
 def fourth_exercise(actor_names_by_id,clusters,artist_id):
     print ("---------EJERCICIO 4--------")
@@ -253,12 +249,11 @@ def main():
     graph = load_graph(movies_by_id, actors_by_movie, actor_names_by_id)
     del movies_by_id
     del actors_by_movie
-    del actor_names_by_id
     print("Loading data ended successfully")
     amount_cl, clusters = find_connected_clusters(graph)
     sorted_clusters = sort_clusters(clusters)
     print("Clustering data ended successfully")
-    artist_id = get_artist(sort_clusters(clusters),-3)
+    artist_id = get_artist(sort_clusters(clusters),-3)[0]
     # first_exercise(amount_cl,sorted_clusters)
     fourth_exercise(actor_names_by_id,clusters,artist_id)
     # fifth_exercise(sorted_clusters)
