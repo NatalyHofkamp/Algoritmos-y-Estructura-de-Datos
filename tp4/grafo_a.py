@@ -162,26 +162,17 @@ def dijkstra (artist_id, cluster):
 
 
 def get_diameter (cluster):
-    """ Given a cluster, the function visits all vertices
-     of the graph and finds all its minimum paths and the 
-     maximum of them for each vertex. Then, it returns the
-     diameter of the graph and the time it would take to
-     go through all the vertices to do this calculation."""
     vertices = cluster.get_vertices()
-    visited_vertices = [0,0]
-    start_time = time.time()
-    progress_bar = tqdm(total=len(vertices), desc="Calculating shortest paths", unit="vertex")
-    elapsed_time = time.time()- start_time
+    diameter,i, elapsed_time = 0
     while (elapsed_time < 900):
-        dijkstra(vertex,cluster)
+        distances,time = dijkstra(vertices[i],cluster)
         max_distance = max(distances.values())
-        progress_bar.update(1)
-        if max_distance > visited_vertices[1]:
-            visited_vertices[1] = max_distance
-    progress_bar.close()
-    average_time = elapsed_time / visited_vertices[0]
-    mean = average_time * cluster.get_size()
-    return visited_vertices[1],mean
+        if max_distance > diameter:
+            diameter = max_distance
+        elapsed_time += time
+        i+=1
+    average_time = elapsed_time /i
+    return diameter,average_time * cluster.get_size()
 
 def get_total_time(cluster,n):
     some_vertices = random.sample(cluster.get_vertices(), k=n)
