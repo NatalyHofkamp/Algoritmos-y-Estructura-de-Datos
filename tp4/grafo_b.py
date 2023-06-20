@@ -30,6 +30,14 @@ def load_bipartite_graph(movies_by_id, actors_by_movie, actor_names_by_id) -> Gr
     return graph
 
 def bfs (visited,graph,queue,value):
+    """
+    This function performs a breadth-first search (BFS)
+    traversal on a graph, starting from the vertices
+    stored in the queue. It visits each vertex in the 
+    graph while keeping track of the visited vertices
+    and the distance from the starting vertex.
+   
+    """
     current_vertex, distance = queue.popleft()
     if current_vertex not in visited:
         visited.add(current_vertex)
@@ -42,6 +50,10 @@ def bfs (visited,graph,queue,value):
     return current_vertex,distance
 
 def calculate_distance(graph, start_vertex, target_vertex):
+    """
+    Calculates the shortest distance between an 
+    initial vertex and another one in a graph.
+    """
     visited = set()
     queue = deque([(start_vertex, 0)]) 
     while queue:
@@ -51,6 +63,10 @@ def calculate_distance(graph, start_vertex, target_vertex):
     return -1  
 
 def find_longest_path(graph, start_vertex):
+    """
+    Finds the longest path from a start 
+    vertex to any other vertex in the graph.
+    """
     visited = set()
     queue = deque([(start_vertex, 0)]) 
     longest_path = ([start_vertex], 0)
@@ -62,7 +78,7 @@ def find_longest_path(graph, start_vertex):
             longest_path[0].append(current_vertex)
     return longest_path
     
-def second_exercise(graph,actor_names_by_id):
+def second_exercise(graph, actor_names_by_id):
     print ("---------EJERCICIO 2--------")
     actor1_id = 'nm0289856' 
     actor2_id = 'nm0000102'
@@ -82,6 +98,11 @@ def third_exercise(graph,actor_names_by_id):
 
 
 def random_walks(graph, num_walks=100):
+    """
+    Performs random walks on the given graph and calculates centrality measures.
+
+    """
+
     vertices = graph.get_vertices()
     centralities = {'actors': {actor: 0 for actor in vertices if actor[:2] =='nm'},
                     'movies': {movie: 0 for movie in vertices if movie[:2] =='tt'}}
@@ -109,8 +130,6 @@ def main():
     movies_by_id, actors_by_movie, actor_names_by_id = read_data(MOVIES_DATA_PATH, ACTORS_DATA_PATH, ACTORS_NAMES_PATH)
     graph = load_bipartite_graph(movies_by_id, actors_by_movie, actor_names_by_id)
     del actors_by_movie
-    print("loading process ended succesfully ")
-    
     second_exercise (graph,actor_names_by_id)
     third_exercise(graph,actor_names_by_id)
     extra_exercise(graph,actor_names_by_id,movies_by_id)

@@ -198,7 +198,7 @@ def bfs(cluster, start_vertex):
 
     return max_distance,distances
 
-def get_diameter(cluster, time_limit=900):
+def get_diameter(cluster, time_limit=100):
     """
     Calculates the diameter and mean time 
     of the cluster using a breadth-first
