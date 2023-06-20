@@ -20,7 +20,6 @@ def load_bipartite_graph(movies_by_id, actors_by_movie, actor_names_by_id) -> Gr
     :return: a bipartite Graph connecting movies and actors
     """
     graph = Graph()
-    print("loading data in process...")
     for movie_id in movies_by_id.keys():
         movie_title = movies_by_id[movie_id]['primaryTitle']
         graph.add_vertex(movie_id, movie_title)
@@ -112,8 +111,8 @@ def main():
     del actors_by_movie
     print("loading process ended succesfully ")
     
-    # second_exercise (graph,actor_names_by_id)
-    # third_exercise(graph,actor_names_by_id)
+    second_exercise (graph,actor_names_by_id)
+    third_exercise(graph,actor_names_by_id)
     extra_exercise(graph,actor_names_by_id,movies_by_id)
 
     

@@ -9,15 +9,12 @@ def possible(grid, x, y, n):
     Returns: True si es posible colocar n en la posicion (x,y) del tablero
 
     """
-    # Verifica que n no pertenece a la fila x
     for i in range(0,9):
         if grid[x][i] == n:
             return False
-    # Verifica que n no pertenece a la fila y
     for i in range(0,9):
         if grid[i][y] == n:
             return False
-    # Verifica que n no pertenece a la submatriz de 3x3 que le corresponde
     xo = (x//3) * 3
     yo = (y//3) * 3
     for i in range(0, 3):
@@ -62,11 +59,7 @@ def solve(grid):
                         grid[i][j] = 0 
                 return grid
 
-   
-
-
-    
-
+ 
 grid = [
 [5, 3, 0, 0, 7, 0, 0, 0, 0],
 [6, 0, 0, 1, 9, 5, 0, 0, 0],
@@ -78,4 +71,4 @@ grid = [
 [0, 0, 0, 4, 1, 9, 0, 0, 5],
 [0, 0, 0, 0, 8, 0, 0, 7, 9]]
 
-solve(grid)
+print(solve(grid))
